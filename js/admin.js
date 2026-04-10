@@ -138,6 +138,9 @@
       else if (sectionId === 'pain')     initPainEditor();
       else if (sectionId === 'services') initServicesEditor();
       else if (sectionId === 'packages') initPackagesEditor();
+      else if (sectionId === 'process')  initProcessEditor();
+      else if (sectionId === 'trust')    initTrustEditor();
+      else if (sectionId === 'app')      initAppEditor();
     }
   }
 
@@ -908,6 +911,320 @@
       cards:    pkgCards
     });
     showToast('Packages saved ✓');
+  }
+
+  /* ============================================================
+     PROCESS EDITOR
+     ============================================================ */
+
+  let processSteps = [];
+
+  const PROCESS_DEFAULTS = [
+    { title: 'Discovery Call',      desc: 'We chat on WhatsApp or a call to understand your nursery, brand, and goals. Takes 20 minutes.' },
+    { title: 'Design & Content',    desc: 'You send us your logo, photos, and text. We design a custom layout you\'ll love.' },
+    { title: 'Review & Revisions',  desc: 'We show you a preview, collect your feedback, and make any final tweaks.' },
+    { title: 'Go Live!',            desc: 'We launch your website, hand over full access, and stay available for 30–60 days of support.' }
+  ];
+
+  function initProcessEditor() {
+    const d = loadSection('process');
+    setVal('process-title',    d.title    || '');
+    setVal('process-subtitle', d.subtitle || '');
+
+    processSteps = (d.steps && d.steps.length)
+      ? d.steps.map(s => Object.assign({}, s))
+      : PROCESS_DEFAULTS.map(s => Object.assign({}, s));
+
+    renderProcessSteps();
+    watchInputs('process', ['process-title', 'process-subtitle']);
+    document.getElementById('process-save-btn').addEventListener('click', saveProcessEditor);
+    document.getElementById('process-add-btn').addEventListener('click', addProcessStep);
+  }
+
+  function renderProcessSteps() {
+    const list = document.getElementById('process-steps-list');
+    list.innerHTML = '';
+    processSteps.forEach((step, i) => list.appendChild(buildProcessStepEl(step, i)));
+  }
+
+  function buildProcessStepEl(step, index) {
+    const total   = processSteps.length;
+    const isFirst = index === 0;
+    const isLast  = index === total - 1;
+
+    const div = document.createElement('div');
+    div.className = 'card-editor-item';
+
+    div.innerHTML =
+      '<div class="card-editor-header">' +
+        '<span class="card-num">Step ' + (index + 1) + '</span>' +
+        '<div class="card-actions">' +
+          '<button class="btn-icon btn-up" title="Move up"'    + (isFirst ? ' disabled' : '') + '>&#8593;</button>' +
+          '<button class="btn-icon btn-down" title="Move down"' + (isLast  ? ' disabled' : '') + '>&#8595;</button>' +
+          '<button class="btn-icon btn-delete" title="Delete">&#10005;</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label>Step Title</label>' +
+        '<input type="text" class="step-title-inp" value="' + escHtml(step.title || '') + '" placeholder="Step title" />' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label>Description</label>' +
+        '<textarea class="step-desc-inp" rows="2" placeholder="Short description">' + escHtml(step.desc || '') + '</textarea>' +
+      '</div>';
+
+    div.querySelector('.btn-up').addEventListener('click',    () => moveProcessStep(index, -1));
+    div.querySelector('.btn-down').addEventListener('click',  () => moveProcessStep(index, 1));
+    div.querySelector('.btn-delete').addEventListener('click',() => deleteProcessStep(index));
+    div.querySelector('.step-title-inp').addEventListener('input', () => markDirty('process'));
+    div.querySelector('.step-desc-inp').addEventListener('input',  () => markDirty('process'));
+
+    return div;
+  }
+
+  function syncProcessFromDom() {
+    document.querySelectorAll('#process-steps-list .card-editor-item').forEach((el, i) => {
+      processSteps[i] = {
+        title: el.querySelector('.step-title-inp').value,
+        desc:  el.querySelector('.step-desc-inp').value
+      };
+    });
+  }
+
+  function moveProcessStep(index, dir) {
+    syncProcessFromDom();
+    const target = index + dir;
+    if (target < 0 || target >= processSteps.length) return;
+    [processSteps[index], processSteps[target]] = [processSteps[target], processSteps[index]];
+    renderProcessSteps();
+    markDirty('process');
+  }
+
+  function deleteProcessStep(index) {
+    if (processSteps.length <= 1) { showToast('Need at least 1 step'); return; }
+    syncProcessFromDom();
+    processSteps.splice(index, 1);
+    renderProcessSteps();
+    markDirty('process');
+  }
+
+  function addProcessStep() {
+    syncProcessFromDom();
+    processSteps.push({ title: 'New Step', desc: 'Describe this step.' });
+    renderProcessSteps();
+    markDirty('process');
+    const list = document.getElementById('process-steps-list');
+    if (list.lastElementChild) list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function saveProcessEditor() {
+    syncProcessFromDom();
+    saveSection('process', {
+      title:    getVal('process-title'),
+      subtitle: getVal('process-subtitle'),
+      steps:    processSteps
+    });
+    showToast('Process saved ✓');
+  }
+
+  /* ============================================================
+     WHY CHOOSE US EDITOR
+     ============================================================ */
+
+  let trustCards = [];
+
+  const TRUST_DEFAULTS = [
+    { icon: 'bi bi-flag-fill',             title: 'UAE-Based Team',        desc: 'We understand UAE parents, KHDA requirements, and local culture — built into every design.', show: true },
+    { icon: 'bi bi-translate',             title: 'True Bilingual',        desc: 'Not just Google Translate. Proper Arabic with RTL layout, written by native speakers.', show: true },
+    { icon: 'bi bi-lightning-charge-fill', title: '7-Day Delivery',        desc: 'Most projects go live in one week. No months of waiting, no excuses.', show: true },
+    { icon: 'bi bi-phone-fill',            title: 'Mobile-First Design',   desc: 'Every site looks stunning and loads fast on iPhones, Android, tablets, and desktops.', show: true },
+    { icon: 'bi bi-shield-check-fill',     title: 'Transparent Pricing',   desc: 'Fixed prices, no hidden fees. You know exactly what you\'re getting before you commit.', show: true },
+    { icon: 'bi bi-headset',               title: 'Ongoing Support',       desc: 'We don\'t disappear after launch. WhatsApp support available for updates, changes, and questions.', show: true }
+  ];
+
+  function initTrustEditor() {
+    const d = loadSection('trust');
+    setVal('trust-title',    d.title    || '');
+    setVal('trust-subtitle', d.subtitle || '');
+
+    trustCards = (d.cards && d.cards.length)
+      ? d.cards.map(c => Object.assign({}, c))
+      : TRUST_DEFAULTS.map(c => Object.assign({}, c));
+
+    renderTrustCards();
+    watchInputs('trust', ['trust-title', 'trust-subtitle']);
+    document.getElementById('trust-save-btn').addEventListener('click', saveTrustEditor);
+    document.getElementById('trust-add-btn').addEventListener('click', addTrustCard);
+  }
+
+  function renderTrustCards() {
+    const list = document.getElementById('trust-cards-list');
+    list.innerHTML = '';
+    trustCards.forEach((card, i) => list.appendChild(buildTrustCardEl(card, i)));
+  }
+
+  function buildTrustCardEl(card, index) {
+    const total   = trustCards.length;
+    const isFirst = index === 0;
+    const isLast  = index === total - 1;
+    const checked = card.show !== false;
+
+    const div = document.createElement('div');
+    div.className = 'card-editor-item';
+
+    div.innerHTML =
+      '<div class="card-editor-header">' +
+        '<span class="card-num">Card ' + (index + 1) + '</span>' +
+        '<div class="card-actions">' +
+          '<button class="btn-icon btn-up" title="Move up"'    + (isFirst ? ' disabled' : '') + '>&#8593;</button>' +
+          '<button class="btn-icon btn-down" title="Move down"' + (isLast  ? ' disabled' : '') + '>&#8595;</button>' +
+          '<label class="toggle-label">' +
+            '<input type="checkbox" class="card-visible"' + (checked ? ' checked' : '') + '>' +
+            '<span class="vis-text">' + (checked ? 'Visible' : 'Hidden') + '</span>' +
+          '</label>' +
+          '<button class="btn-icon btn-delete" title="Delete">&#10005;</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-row two-col">' +
+        '<div class="form-group">' +
+          '<label>Icon Class (Bootstrap Icons)</label>' +
+          '<input type="text" class="card-icon-inp" value="' + escHtml(card.icon  || '') + '" placeholder="bi bi-flag-fill" />' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Title</label>' +
+          '<input type="text" class="card-title-inp" value="' + escHtml(card.title || '') + '" placeholder="Card title" />' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label>Description</label>' +
+        '<textarea class="card-desc-inp" rows="2" placeholder="Card description">' + escHtml(card.desc || '') + '</textarea>' +
+      '</div>';
+
+    div.querySelector('.btn-up').addEventListener('click',    () => moveTrustCard(index, -1));
+    div.querySelector('.btn-down').addEventListener('click',  () => moveTrustCard(index, 1));
+    div.querySelector('.btn-delete').addEventListener('click',() => deleteTrustCard(index));
+    div.querySelector('.card-visible').addEventListener('change', function () {
+      div.querySelector('.vis-text').textContent = this.checked ? 'Visible' : 'Hidden';
+      markDirty('trust');
+    });
+    div.querySelector('.card-icon-inp').addEventListener('input',  () => markDirty('trust'));
+    div.querySelector('.card-title-inp').addEventListener('input', () => markDirty('trust'));
+    div.querySelector('.card-desc-inp').addEventListener('input',  () => markDirty('trust'));
+
+    return div;
+  }
+
+  function syncTrustFromDom() {
+    document.querySelectorAll('#trust-cards-list .card-editor-item').forEach((el, i) => {
+      trustCards[i] = {
+        icon:  el.querySelector('.card-icon-inp').value,
+        title: el.querySelector('.card-title-inp').value,
+        desc:  el.querySelector('.card-desc-inp').value,
+        show:  el.querySelector('.card-visible').checked
+      };
+    });
+  }
+
+  function moveTrustCard(index, dir) {
+    syncTrustFromDom();
+    const target = index + dir;
+    if (target < 0 || target >= trustCards.length) return;
+    [trustCards[index], trustCards[target]] = [trustCards[target], trustCards[index]];
+    renderTrustCards();
+    markDirty('trust');
+  }
+
+  function deleteTrustCard(index) {
+    if (trustCards.length <= 1) { showToast('Need at least 1 card'); return; }
+    syncTrustFromDom();
+    trustCards.splice(index, 1);
+    renderTrustCards();
+    markDirty('trust');
+  }
+
+  function addTrustCard() {
+    syncTrustFromDom();
+    trustCards.push({ icon: 'bi bi-star-fill', title: 'New Feature', desc: 'Describe why clients choose you.', show: true });
+    renderTrustCards();
+    markDirty('trust');
+    const list = document.getElementById('trust-cards-list');
+    if (list.lastElementChild) list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function saveTrustEditor() {
+    syncTrustFromDom();
+    saveSection('trust', {
+      title:    getVal('trust-title'),
+      subtitle: getVal('trust-subtitle'),
+      cards:    trustCards
+    });
+    showToast('Why Choose Us saved ✓');
+  }
+
+  /* ============================================================
+     APP SHOWCASE EDITOR
+     ============================================================ */
+
+  function initAppEditor() {
+    const d = loadSection('app');
+
+    const showChk = document.getElementById('app-show');
+    showChk.checked = d.show === true;
+    showChk.addEventListener('change', () => markDirty('app'));
+
+    setVal('app-badge',    d.badge    || 'Included with Growth Package');
+    setVal('app-title',    d.title    || '');
+    setVal('app-subtitle', d.subtitle || '');
+    setVal('app-infoText', d.infoText || 'Included with Growth Package');
+
+    // Render features
+    const featList = document.getElementById('app-features-list');
+    featList.innerHTML = '';
+    (d.features || []).forEach(f => addAppFeatureRow(featList, f));
+
+    watchInputs('app', ['app-badge', 'app-title', 'app-subtitle', 'app-infoText']);
+    document.getElementById('app-save-btn').addEventListener('click', saveAppEditor);
+    document.getElementById('app-add-feat-btn').addEventListener('click', () => {
+      addAppFeatureRow(document.getElementById('app-features-list'), '');
+      markDirty('app');
+    });
+  }
+
+  function addAppFeatureRow(listEl, text) {
+    const row = document.createElement('div');
+    row.className = 'feature-row';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = text || '';
+    input.placeholder = 'Feature bullet point';
+    input.addEventListener('input', () => markDirty('app'));
+
+    const del = document.createElement('button');
+    del.className = 'btn-icon btn-delete';
+    del.title = 'Remove';
+    del.innerHTML = '&#10005;';
+    del.addEventListener('click', () => { row.remove(); markDirty('app'); });
+
+    row.appendChild(input);
+    row.appendChild(del);
+    listEl.appendChild(row);
+  }
+
+  function saveAppEditor() {
+    const features = Array.from(
+      document.querySelectorAll('#app-features-list .feature-row input')
+    ).map(el => el.value).filter(v => v.trim() !== '');
+
+    saveSection('app', {
+      show:     document.getElementById('app-show').checked,
+      badge:    getVal('app-badge'),
+      title:    getVal('app-title'),
+      subtitle: getVal('app-subtitle'),
+      infoText: getVal('app-infoText'),
+      features
+    });
+    showToast('App Showcase saved ✓');
   }
 
   /* ============================================================

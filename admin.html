@@ -493,18 +493,68 @@
         </section>
 
         <section id="section-process" class="admin-section">
-          <div class="coming-soon-placeholder">
-            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            <h3>Process Editor</h3>
-            <p>Coming in sub-step 11E</p>
+          <div class="editor-header">
+            <div>
+              <h2 class="editor-title">Process Editor</h2>
+              <p class="editor-desc">Edit the "How It Works" steps. Steps are auto-numbered.</p>
+            </div>
+            <button class="btn-save" id="process-save-btn">
+              <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Process
+            </button>
+          </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Section Heading</h3>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Title <small>(HTML ok — wrap lime text in &lt;span class="lime-text"&gt;...&lt;/span&gt;)</small></label>
+                <input type="text" id="process-title" placeholder='How It &lt;span class="lime-text"&gt;Works&lt;/span&gt;' />
+              </div>
+              <div class="form-group">
+                <label>Subtitle</label>
+                <input type="text" id="process-subtitle" placeholder="From first message to live website..." />
+              </div>
+            </div>
+          </div>
+
+          <div id="process-steps-list"></div>
+
+          <div style="text-align:center; margin-top:16px;">
+            <button class="btn-add-card" id="process-add-btn">+ Add Step</button>
           </div>
         </section>
 
         <section id="section-trust" class="admin-section">
-          <div class="coming-soon-placeholder">
-            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <h3>Why Choose Us Editor</h3>
-            <p>Coming in sub-step 11E</p>
+          <div class="editor-header">
+            <div>
+              <h2 class="editor-title">Why Choose Us Editor</h2>
+              <p class="editor-desc">Edit the trust/feature cards. Show or hide individual cards.</p>
+            </div>
+            <button class="btn-save" id="trust-save-btn">
+              <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Why Choose Us
+            </button>
+          </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Section Heading</h3>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Title <small>(HTML ok — wrap lime text in &lt;span class="lime-text"&gt;...&lt;/span&gt;)</small></label>
+                <input type="text" id="trust-title" placeholder='Why Nurseries &lt;span class="lime-text"&gt;Choose Us&lt;/span&gt;' />
+              </div>
+              <div class="form-group">
+                <label>Subtitle</label>
+                <input type="text" id="trust-subtitle" placeholder="We're not a generic web agency..." />
+              </div>
+            </div>
+          </div>
+
+          <div id="trust-cards-list"></div>
+
+          <div style="text-align:center; margin-top:16px;">
+            <button class="btn-add-card" id="trust-add-btn">+ Add Card</button>
           </div>
         </section>
 
@@ -517,11 +567,59 @@
         </section>
 
         <section id="section-app" class="admin-section">
-          <div class="coming-soon-placeholder">
-            <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-            <h3>App Showcase Editor</h3>
-            <p>Coming in sub-step 11E</p>
+          <div class="editor-header">
+            <div>
+              <h2 class="editor-title">App Showcase Editor</h2>
+              <p class="editor-desc">Control the App Showcase section on the sales page. Toggle visibility and edit content.</p>
+            </div>
+            <button class="btn-save" id="app-save-btn">
+              <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save App Showcase
+            </button>
           </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Section Visibility</h3>
+            <div class="form-group">
+              <label class="toggle-label" style="cursor:pointer;">
+                <input type="checkbox" id="app-show" />
+                <span id="app-show-text" style="font-weight:600;">Show App Showcase section on sales page</span>
+              </label>
+              <p style="font-size:0.82rem;color:var(--muted);margin-top:6px;">When OFF, the section is completely hidden from visitors.</p>
+            </div>
+          </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Content</h3>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Badge Text <small>(small pill above title)</small></label>
+                <input type="text" id="app-badge" placeholder="Included with Growth Package" />
+              </div>
+              <div class="form-group">
+                <label>Info Text <small>(small note below features)</small></label>
+                <input type="text" id="app-infoText" placeholder="Included with Growth Package" />
+              </div>
+            </div>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Title <small>(HTML ok — wrap lime text in &lt;span class="lime-text"&gt;...&lt;/span&gt;)</small></label>
+                <input type="text" id="app-title" placeholder='Manage Your &lt;span class="lime-text"&gt;Nursery App&lt;/span&gt;' />
+              </div>
+              <div class="form-group">
+                <label>Subtitle</label>
+                <input type="text" id="app-subtitle" placeholder="A dedicated admin app included with the Growth package." />
+              </div>
+            </div>
+          </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Features List</h3>
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Each line is a bullet point shown under the subtitle.</p>
+            <div id="app-features-list"></div>
+            <button type="button" class="btn-add-feature" id="app-add-feat-btn" style="margin-top:10px;">+ Add Feature</button>
+          </div>
+
         </section>
 
         <section id="section-upsell" class="admin-section">
