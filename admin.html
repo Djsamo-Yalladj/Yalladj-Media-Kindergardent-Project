@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YallaDJ Media — Admin Panel</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Admin Styles -->
+  <link rel="stylesheet" href="css/admin-style.css" />
+</head>
+<body>
+
+  <!-- ===================== LOGIN SCREEN ===================== -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="images/No-BG-02.png" alt="YallaDJ Media" />
+        <h1>YallaDJ Media</h1>
+        <p>Admin Panel</p>
+      </div>
+      <form id="login-form" autocomplete="off">
+        <div class="input-group">
+          <label for="admin-password">Password</label>
+          <input type="password" id="admin-password" placeholder="Enter admin password" autocomplete="current-password" />
+        </div>
+        <div class="remember-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="remember-me" />
+            <span>Remember me</span>
+          </label>
+        </div>
+        <button type="submit" class="btn-login">Login</button>
+        <div id="login-error" class="login-error hidden">Incorrect password. Please try again.</div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== ADMIN APP ===================== -->
+  <div id="admin-app" class="hidden">
+
+    <!-- Sidebar Overlay (mobile) -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <img src="images/No-BG-02.png" alt="YallaDJ Media" class="sidebar-logo" />
+        <span class="sidebar-title">YallaDJ Media</span>
+        <button id="sidebar-close" class="sidebar-close" title="Close menu">&#10005;</button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <p class="nav-label">Dashboard</p>
+        <a href="#" class="nav-item active" data-section="home">
+          <svg viewBox="0 0 24 24"><path d="M3 9L12 2l9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Dashboard Home
+        </a>
+
+        <p class="nav-label">Page Sections</p>
+        <a href="#" class="nav-item" data-section="hero">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+          Hero
+        </a>
+        <a href="#" class="nav-item" data-section="pain">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          Pain Points
+        </a>
+        <a href="#" class="nav-item" data-section="services">
+          <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+          Services
+        </a>
+        <a href="#" class="nav-item" data-section="packages">
+          <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+          Packages
+        </a>
+        <a href="#" class="nav-item" data-section="process">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Process
+        </a>
+        <a href="#" class="nav-item" data-section="trust">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Why Choose Us
+        </a>
+        <a href="#" class="nav-item" data-section="portfolio">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Portfolio
+        </a>
+        <a href="#" class="nav-item" data-section="app">
+          <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+          App Showcase
+        </a>
+        <a href="#" class="nav-item" data-section="upsell">
+          <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+          Upsells
+        </a>
+        <a href="#" class="nav-item" data-section="contact">
+          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.64A2 2 0 012 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          Contact
+        </a>
+        <a href="#" class="nav-item" data-section="footer">
+          <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          Footer
+        </a>
+
+        <p class="nav-label">Config</p>
+        <a href="#" class="nav-item" data-section="settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          General Settings
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="index.html" target="_blank" class="btn-view-live">
+          <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          View Live Page
+        </a>
+        <button id="logout-btn" class="btn-logout">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div id="main-wrapper">
+
+      <!-- Top Bar -->
+      <header class="topbar">
+        <button id="hamburger" class="hamburger" title="Open menu">
+          <span></span><span></span><span></span>
+        </button>
+        <h2 id="topbar-title">Dashboard</h2>
+        <div class="topbar-right">
+          <span id="topbar-time" class="topbar-time"></span>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <main id="content-area">
+
+        <!-- ===== HOME SECTION ===== -->
+        <section id="section-home" class="admin-section active">
+          <div class="section-heading">
+            <h2>Welcome to YallaDJ Media Admin</h2>
+            <p>Manage all content on your sales page from here — no code needed.</p>
+          </div>
+
+          <div id="last-saved-banner" class="last-saved-banner hidden">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Last saved: <span id="last-saved-time">–</span>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-number" id="stat-packages">3</span>
+                <span class="stat-label">Active Packages</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-number" id="stat-pain">4</span>
+                <span class="stat-label">Pain Points</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">
+                <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-number" id="stat-upsell">6</span>
+                <span class="stat-label">Upsell Services</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-actions">
+            <a href="index.html" target="_blank" class="btn-primary-large">
+              <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              View Live Page
+            </a>
+          </div>
+
+          <div class="sections-overview">
+            <h3>Page Sections</h3>
+            <div class="sections-grid">
+              <div class="section-tile" data-goto="hero">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+                Hero
+              </div>
+              <div class="section-tile" data-goto="pain">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                Pain Points
+              </div>
+              <div class="section-tile" data-goto="services">
+                <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                Services
+              </div>
+              <div class="section-tile" data-goto="packages">
+                <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                Packages
+              </div>
+              <div class="section-tile" data-goto="process">
+                <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Process
+              </div>
+              <div class="section-tile" data-goto="trust">
+                <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Why Choose Us
+              </div>
+              <div class="section-tile" data-goto="portfolio">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                Portfolio
+              </div>
+              <div class="section-tile" data-goto="app">
+                <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                App Showcase
+              </div>
+              <div class="section-tile" data-goto="upsell">
+                <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+                Upsells
+              </div>
+              <div class="section-tile" data-goto="contact">
+                <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.64A2 2 0 012 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                Contact
+              </div>
+              <div class="section-tile" data-goto="footer">
+                <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                Footer
+              </div>
+              <div class="section-tile" data-goto="settings">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                General Settings
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== PLACEHOLDER SECTIONS (11C–11G will fill these) ===== -->
+        <section id="section-hero" class="admin-section">
+          <div class="editor-header">
+            <div>
+              <h2 class="editor-title">Hero Section</h2>
+              <p class="editor-desc">Edit the main headline, buttons, and stats at the top of the page.</p>
+            </div>
+            <button class="btn-save" id="hero-save-btn">
+              <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Hero
+            </button>
+          </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Badge &amp; Headline</h3>
+            <div class="form-group">
+              <label>Badge Text (small pill above headline)</label>
+              <input type="text" id="hero-badge" placeholder="UAE's Nursery Web Specialists" />
+            </div>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Title Prefix (regular text)</label>
+                <input type="text" id="hero-titlePrefix" placeholder="Professional Websites for" />
+              </div>
+              <div class="form-group">
+                <label>Title Highlight (lime color)</label>
+                <input type="text" id="hero-titleHighlight" placeholder="Nurseries &amp; Kindergartens" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Subtitle</label>
+              <textarea id="hero-subtitle" rows="3" placeholder="Stand out, attract more enrolments..."></textarea>
+            </div>
+          </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Buttons</h3>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Button 1 Text</label>
+                <input type="text" id="hero-btn1Text" placeholder="View Packages" />
+              </div>
+              <div class="form-group">
+                <label>Button 1 Link (e.g. #packages)</label>
+                <input type="text" id="hero-btn1Link" placeholder="#packages" />
+              </div>
+            </div>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>WhatsApp Button Text</label>
+                <input type="text" id="hero-btn2Text" placeholder="WhatsApp Us" />
+              </div>
+              <div class="form-group">
+                <label>WhatsApp Number (digits only)</label>
+                <input type="text" id="hero-waNumber" placeholder="971544503515" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>WhatsApp Prefilled Message</label>
+              <input type="text" id="hero-waMessage" placeholder="Hi YallaDJ Media! I'm interested in a nursery website." />
+            </div>
+          </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Stats Bar (3 boxes below subtitle)</h3>
+            <div class="stats-row">
+              <div class="stat-editor-group">
+                <label>Stat 1 — Number</label>
+                <input type="text" id="hero-stat1Num" placeholder="7 Days" />
+                <label>Stat 1 — Label</label>
+                <input type="text" id="hero-stat1Label" placeholder="Delivery" />
+              </div>
+              <div class="stat-editor-group">
+                <label>Stat 2 — Number</label>
+                <input type="text" id="hero-stat2Num" placeholder="EN + AR" />
+                <label>Stat 2 — Label</label>
+                <input type="text" id="hero-stat2Label" placeholder="Bilingual" />
+              </div>
+              <div class="stat-editor-group">
+                <label>Stat 3 — Number</label>
+                <input type="text" id="hero-stat3Num" placeholder="AED 1,800" />
+                <label>Stat 3 — Label</label>
+                <input type="text" id="hero-stat3Label" placeholder="Starting From" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-pain" class="admin-section">
+          <div class="editor-header">
+            <div>
+              <h2 class="editor-title">Pain Points</h2>
+              <p class="editor-desc">Edit the "Missing Out?" section. Add, remove, reorder, or hide cards.</p>
+            </div>
+            <button class="btn-save" id="pain-save-btn">
+              <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Pain Points
+            </button>
+          </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Section Header</h3>
+            <div class="form-group">
+              <label>Title (use &lt;span class="lime-text"&gt;word&lt;/span&gt; for lime highlight)</label>
+              <input type="text" id="pain-title" placeholder='Is Your Nursery &lt;span class="lime-text"&gt;Missing Out?&lt;/span&gt;' />
+            </div>
+            <div class="form-group">
+              <label>Subtitle</label>
+              <textarea id="pain-subtitle" rows="2" placeholder="Most nurseries are losing enrolments..."></textarea>
+            </div>
+          </div>
+
+          <div class="editor-card">
+            <div class="cards-list-header">
+              <h3 class="editor-card-title">Pain Point Cards</h3>
+              <button class="btn-add-card" id="pain-add-btn">+ Add Card</button>
+            </div>
+            <div id="pain-cards-list"></div>
+          </div>
+        </section>
+
+        <section id="section-services" class="admin-section">
+          <div class="editor-header">
+            <div>
+              <h2 class="editor-title">Services Section</h2>
+              <p class="editor-desc">Edit the two service cards, their features, and section headline.</p>
+            </div>
+            <button class="btn-save" id="services-save-btn">
+              <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Services
+            </button>
+          </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Section Header</h3>
+            <div class="form-group">
+              <label>Title (use &lt;span class="lime-text"&gt;word&lt;/span&gt; for lime highlight)</label>
+              <input type="text" id="services-title" placeholder='What We &lt;span class="lime-text"&gt;Build for You&lt;/span&gt;' />
+            </div>
+            <div class="form-group">
+              <label>Subtitle</label>
+              <textarea id="services-subtitle" rows="2" placeholder="Two focused service tracks..."></textarea>
+            </div>
+          </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Service Card 1</h3>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Icon Class (Bootstrap Icons)</label>
+                <input type="text" id="svc0-icon" placeholder="bi bi-rocket-takeoff-fill" />
+              </div>
+              <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="svc0-title" placeholder="New Nursery Website" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="svc0-desc" rows="2"></textarea>
+            </div>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Button Text</label>
+                <input type="text" id="svc0-btnText" placeholder="View Packages" />
+              </div>
+              <div class="form-group">
+                <label>Button Link</label>
+                <input type="text" id="svc0-btnLink" placeholder="#packages" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Features List</label>
+              <div id="svc0-features-list" class="features-list"></div>
+              <button class="btn-add-feature" data-svc="0">+ Add Feature</button>
+            </div>
+          </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Service Card 2</h3>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Icon Class (Bootstrap Icons)</label>
+                <input type="text" id="svc1-icon" placeholder="bi bi-arrow-repeat" />
+              </div>
+              <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="svc1-title" placeholder="Website Redesign" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="svc1-desc" rows="2"></textarea>
+            </div>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Button Text</label>
+                <input type="text" id="svc1-btnText" placeholder="View Pricing" />
+              </div>
+              <div class="form-group">
+                <label>Button Link</label>
+                <input type="text" id="svc1-btnLink" placeholder="#packages" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Features List</label>
+              <div id="svc1-features-list" class="features-list"></div>
+              <button class="btn-add-feature" data-svc="1">+ Add Feature</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-packages" class="admin-section">
+          <div class="coming-soon-placeholder">
+            <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+            <h3>Packages Editor</h3>
+            <p>Coming in sub-step 11D</p>
+          </div>
+        </section>
+
+        <section id="section-process" class="admin-section">
+          <div class="coming-soon-placeholder">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <h3>Process Editor</h3>
+            <p>Coming in sub-step 11E</p>
+          </div>
+        </section>
+
+        <section id="section-trust" class="admin-section">
+          <div class="coming-soon-placeholder">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <h3>Why Choose Us Editor</h3>
+            <p>Coming in sub-step 11E</p>
+          </div>
+        </section>
+
+        <section id="section-portfolio" class="admin-section">
+          <div class="coming-soon-placeholder">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <h3>Portfolio Editor</h3>
+            <p>Coming in sub-step 11F</p>
+          </div>
+        </section>
+
+        <section id="section-app" class="admin-section">
+          <div class="coming-soon-placeholder">
+            <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+            <h3>App Showcase Editor</h3>
+            <p>Coming in sub-step 11E</p>
+          </div>
+        </section>
+
+        <section id="section-upsell" class="admin-section">
+          <div class="coming-soon-placeholder">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+            <h3>Upsells Editor</h3>
+            <p>Coming in sub-step 11F</p>
+          </div>
+        </section>
+
+        <section id="section-contact" class="admin-section">
+          <div class="coming-soon-placeholder">
+            <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.64A2 2 0 012 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+            <h3>Contact Editor</h3>
+            <p>Coming in sub-step 11F</p>
+          </div>
+        </section>
+
+        <section id="section-footer" class="admin-section">
+          <div class="coming-soon-placeholder">
+            <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <h3>Footer Editor</h3>
+            <p>Coming in sub-step 11F</p>
+          </div>
+        </section>
+
+        <section id="section-settings" class="admin-section">
+          <div class="coming-soon-placeholder">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            <h3>General Settings</h3>
+            <p>Coming in sub-step 11G</p>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Admin Script -->
+  <script src="js/admin.js"></script>
+</body>
+</html>
