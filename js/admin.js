@@ -140,7 +140,11 @@
       else if (sectionId === 'packages') initPackagesEditor();
       else if (sectionId === 'process')  initProcessEditor();
       else if (sectionId === 'trust')    initTrustEditor();
-      else if (sectionId === 'app')      initAppEditor();
+      else if (sectionId === 'app')       initAppEditor();
+      else if (sectionId === 'portfolio') initPortfolioEditor();
+      else if (sectionId === 'upsell')    initUpsellEditor();
+      else if (sectionId === 'contact')   initContactEditor();
+      else if (sectionId === 'footer')    initFooterEditor();
     }
   }
 
@@ -244,6 +248,15 @@
   /* ============================================================
      EDITOR UTILITIES
      ============================================================ */
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
 
   function loadSection(key) {
     try {
@@ -1225,6 +1238,352 @@
       features
     });
     showToast('App Showcase saved ✓');
+  }
+
+  /* ============================================================
+     PORTFOLIO EDITOR
+     ============================================================ */
+
+  let portfolioCards = [];
+
+  function renderPortfolioCardItem(list, card, idx) {
+    const item = document.createElement('div');
+    item.className = 'card-editor-item';
+    item.dataset.idx = idx;
+    item.innerHTML =
+      '<div class="card-editor-header">' +
+        '<span class="card-num">Card ' + (idx + 1) + '</span>' +
+        '<div class="card-actions">' +
+          '<label class="toggle-label" title="Show/Hide" style="margin-right:4px;">' +
+            '<input type="checkbox" class="pc-show"' + (card.show !== false ? ' checked' : '') + ' />' +
+            '<span style="font-size:12px;color:var(--muted);">Visible</span>' +
+          '</label>' +
+          '<button class="btn-icon btn-move-up" title="Move up">&#8593;</button>' +
+          '<button class="btn-icon btn-move-down" title="Move down">&#8595;</button>' +
+          '<button class="btn-icon btn-delete" title="Delete">&#10005;</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-row two-col">' +
+        '<div class="form-group">' +
+          '<label>Nursery Name</label>' +
+          '<input type="text" class="pc-name" value="' + escHtml(card.name || '') + '" placeholder="Nursery name" />' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Short Description</label>' +
+          '<input type="text" class="pc-desc" value="' + escHtml(card.desc || '') + '" placeholder="Sample website — live demo coming soon" />' +
+        '</div>' +
+      '</div>';
+
+    item.querySelector('.pc-name').addEventListener('input', () => markDirty('portfolio'));
+    item.querySelector('.pc-desc').addEventListener('input', () => markDirty('portfolio'));
+    item.querySelector('.pc-show').addEventListener('change', () => markDirty('portfolio'));
+    item.querySelector('.btn-move-up').addEventListener('click', () => {
+      if (idx > 0) { syncPortfolioFromDom(); [portfolioCards[idx-1], portfolioCards[idx]] = [portfolioCards[idx], portfolioCards[idx-1]]; renderPortfolioList(); markDirty('portfolio'); }
+    });
+    item.querySelector('.btn-move-down').addEventListener('click', () => {
+      if (idx < portfolioCards.length - 1) { syncPortfolioFromDom(); [portfolioCards[idx], portfolioCards[idx+1]] = [portfolioCards[idx+1], portfolioCards[idx]]; renderPortfolioList(); markDirty('portfolio'); }
+    });
+    item.querySelector('.btn-delete').addEventListener('click', () => {
+      syncPortfolioFromDom(); portfolioCards.splice(idx, 1); renderPortfolioList(); markDirty('portfolio');
+    });
+    list.appendChild(item);
+  }
+
+  function renderPortfolioList() {
+    const list = document.getElementById('portfolio-cards-list');
+    list.innerHTML = '';
+    portfolioCards.forEach((c, i) => renderPortfolioCardItem(list, c, i));
+  }
+
+  function syncPortfolioFromDom() {
+    const items = document.querySelectorAll('#portfolio-cards-list .card-editor-item');
+    portfolioCards = Array.from(items).map(item => ({
+      name: item.querySelector('.pc-name').value,
+      desc: item.querySelector('.pc-desc').value,
+      show: item.querySelector('.pc-show').checked
+    }));
+  }
+
+  function initPortfolioEditor() {
+    const d = loadSection('portfolio');
+    portfolioCards = (d.cards || []).map(c => ({ ...c }));
+    setVal('portfolio-title',     d.title    || '');
+    setVal('portfolio-subtitle',  d.subtitle || '');
+    setVal('portfolio-demoBtn',   d.demoBtn  || '');
+    setVal('portfolio-demoWaLink',d.demoWaLink || '');
+    renderPortfolioList();
+    watchInputs('portfolio', ['portfolio-title','portfolio-subtitle','portfolio-demoBtn','portfolio-demoWaLink']);
+    document.getElementById('portfolio-save-btn').addEventListener('click', savePortfolioEditor);
+    document.getElementById('portfolio-add-btn').addEventListener('click', () => {
+      syncPortfolioFromDom();
+      portfolioCards.push({ name: '', desc: '', show: true });
+      renderPortfolioList();
+      markDirty('portfolio');
+      document.getElementById('portfolio-cards-list').lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  function savePortfolioEditor() {
+    syncPortfolioFromDom();
+    saveSection('portfolio', {
+      title:       getVal('portfolio-title'),
+      subtitle:    getVal('portfolio-subtitle'),
+      cards:       portfolioCards,
+      demoBtn:     getVal('portfolio-demoBtn'),
+      demoWaLink:  getVal('portfolio-demoWaLink')
+    });
+    showToast('Portfolio saved ✓');
+  }
+
+  /* ============================================================
+     UPSELLS EDITOR
+     ============================================================ */
+
+  let upsellAddons = [];
+
+  function renderUpsellAddonItem(list, addon, idx) {
+    const item = document.createElement('div');
+    item.className = 'card-editor-item';
+    item.dataset.idx = idx;
+    item.innerHTML =
+      '<div class="card-editor-header">' +
+        '<span class="card-num">Addon ' + (idx + 1) + '</span>' +
+        '<div class="card-actions">' +
+          '<label class="toggle-label" title="Show/Hide" style="margin-right:4px;">' +
+            '<input type="checkbox" class="ua-show"' + (addon.show !== false ? ' checked' : '') + ' />' +
+            '<span style="font-size:12px;color:var(--muted);">Visible</span>' +
+          '</label>' +
+          '<button class="btn-icon btn-move-up" title="Move up">&#8593;</button>' +
+          '<button class="btn-icon btn-move-down" title="Move down">&#8595;</button>' +
+          '<button class="btn-icon btn-delete" title="Delete">&#10005;</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-row two-col">' +
+        '<div class="form-group">' +
+          '<label>Icon Class <small>(e.g. bi bi-tools)</small></label>' +
+          '<input type="text" class="ua-icon" value="' + escHtml(addon.icon || '') + '" placeholder="bi bi-tools" />' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Service Title</label>' +
+          '<input type="text" class="ua-title" value="' + escHtml(addon.title || '') + '" placeholder="Service name" />' +
+        '</div>' +
+      '</div>';
+
+    item.querySelector('.ua-icon').addEventListener('input', () => markDirty('upsell'));
+    item.querySelector('.ua-title').addEventListener('input', () => markDirty('upsell'));
+    item.querySelector('.ua-show').addEventListener('change', () => markDirty('upsell'));
+    item.querySelector('.btn-move-up').addEventListener('click', () => {
+      if (idx > 0) { syncUpsellFromDom(); [upsellAddons[idx-1], upsellAddons[idx]] = [upsellAddons[idx], upsellAddons[idx-1]]; renderUpsellList(); markDirty('upsell'); }
+    });
+    item.querySelector('.btn-move-down').addEventListener('click', () => {
+      if (idx < upsellAddons.length - 1) { syncUpsellFromDom(); [upsellAddons[idx], upsellAddons[idx+1]] = [upsellAddons[idx+1], upsellAddons[idx]]; renderUpsellList(); markDirty('upsell'); }
+    });
+    item.querySelector('.btn-delete').addEventListener('click', () => {
+      syncUpsellFromDom(); upsellAddons.splice(idx, 1); renderUpsellList(); markDirty('upsell');
+    });
+    list.appendChild(item);
+  }
+
+  function renderUpsellList() {
+    const list = document.getElementById('upsell-addons-list');
+    list.innerHTML = '';
+    upsellAddons.forEach((a, i) => renderUpsellAddonItem(list, a, i));
+  }
+
+  function syncUpsellFromDom() {
+    const items = document.querySelectorAll('#upsell-addons-list .card-editor-item');
+    upsellAddons = Array.from(items).map(item => ({
+      icon:  item.querySelector('.ua-icon').value,
+      title: item.querySelector('.ua-title').value,
+      show:  item.querySelector('.ua-show').checked
+    }));
+  }
+
+  function initUpsellEditor() {
+    const d = loadSection('upsell');
+    upsellAddons = (d.addons || []).map(a => ({ ...a }));
+    setVal('upsell-title',     d.title    || '');
+    setVal('upsell-subtitle',  d.subtitle || '');
+    setVal('upsell-btnText',   d.btnText  || '');
+    setVal('upsell-btnWaLink', d.btnWaLink || '');
+    renderUpsellList();
+    watchInputs('upsell', ['upsell-title','upsell-subtitle','upsell-btnText','upsell-btnWaLink']);
+    document.getElementById('upsell-save-btn').addEventListener('click', saveUpsellEditor);
+    document.getElementById('upsell-add-btn').addEventListener('click', () => {
+      syncUpsellFromDom();
+      upsellAddons.push({ icon: 'bi bi-star', title: '', show: true });
+      renderUpsellList();
+      markDirty('upsell');
+      document.getElementById('upsell-addons-list').lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  function saveUpsellEditor() {
+    syncUpsellFromDom();
+    saveSection('upsell', {
+      title:      getVal('upsell-title'),
+      subtitle:   getVal('upsell-subtitle'),
+      addons:     upsellAddons,
+      btnText:    getVal('upsell-btnText'),
+      btnWaLink:  getVal('upsell-btnWaLink')
+    });
+    showToast('Upsells saved ✓');
+  }
+
+  /* ============================================================
+     CONTACT EDITOR
+     ============================================================ */
+
+  function initContactEditor() {
+    const d = loadSection('contact');
+    setVal('contact-title',        d.title        || '');
+    setVal('contact-subtitle',     d.subtitle     || '');
+    setVal('contact-phone',        d.phone        || '');
+    setVal('contact-waHref',       d.waHref       || '');
+    setVal('contact-email',        d.email        || '');
+    setVal('contact-location',     d.location     || '');
+    setVal('contact-responseTime', d.responseTime || '');
+    setVal('contact-formBtnText',  d.formBtnText  || '');
+    watchInputs('contact', [
+      'contact-title','contact-subtitle','contact-phone','contact-waHref',
+      'contact-email','contact-location','contact-responseTime','contact-formBtnText'
+    ]);
+    document.getElementById('contact-save-btn').addEventListener('click', saveContactEditor);
+  }
+
+  function saveContactEditor() {
+    saveSection('contact', {
+      title:        getVal('contact-title'),
+      subtitle:     getVal('contact-subtitle'),
+      phone:        getVal('contact-phone'),
+      waHref:       getVal('contact-waHref'),
+      email:        getVal('contact-email'),
+      emailHref:    'mailto:' + getVal('contact-email'),
+      location:     getVal('contact-location'),
+      responseTime: getVal('contact-responseTime'),
+      formBtnText:  getVal('contact-formBtnText')
+    });
+    showToast('Contact saved ✓');
+  }
+
+  /* ============================================================
+     FOOTER EDITOR
+     ============================================================ */
+
+  let footerQuickLinks   = [];
+  let footerServiceLinks = [];
+
+  function renderLinkRow(listEl, link, idx, type) {
+    const row = document.createElement('div');
+    row.className = 'feature-row';
+    row.innerHTML = `
+      <input type="text" class="fl-label" value="${escHtml(link.label)}" placeholder="Link label" style="flex:1.2;" />
+      <input type="text" class="fl-anchor" value="${escHtml(link.anchor)}" placeholder="#section" style="flex:1;" />
+      <button class="btn-icon btn-move-up" title="Move up">↑</button>
+      <button class="btn-icon btn-move-down" title="Move down">↓</button>
+      <button class="btn-icon btn-delete" title="Delete">✕</button>`;
+
+    row.querySelector('.fl-label').addEventListener('input',  () => markDirty('footer'));
+    row.querySelector('.fl-anchor').addEventListener('input', () => markDirty('footer'));
+    row.querySelector('.btn-move-up').addEventListener('click', () => {
+      if (idx > 0) {
+        syncFooterFromDom();
+        const arr = type === 'quick' ? footerQuickLinks : footerServiceLinks;
+        [arr[idx-1], arr[idx]] = [arr[idx], arr[idx-1]];
+        renderFooterLists();
+        markDirty('footer');
+      }
+    });
+    row.querySelector('.btn-move-down').addEventListener('click', () => {
+      const arr = type === 'quick' ? footerQuickLinks : footerServiceLinks;
+      if (idx < arr.length - 1) {
+        syncFooterFromDom();
+        [arr[idx], arr[idx+1]] = [arr[idx+1], arr[idx]];
+        renderFooterLists();
+        markDirty('footer');
+      }
+    });
+    row.querySelector('.btn-delete').addEventListener('click', () => {
+      syncFooterFromDom();
+      const arr = type === 'quick' ? footerQuickLinks : footerServiceLinks;
+      arr.splice(idx, 1);
+      renderFooterLists();
+      markDirty('footer');
+    });
+    listEl.appendChild(row);
+  }
+
+  function renderFooterLists() {
+    const ql = document.getElementById('footer-quicklinks-list');
+    const sl = document.getElementById('footer-servicelinks-list');
+    ql.innerHTML = '';
+    sl.innerHTML = '';
+    footerQuickLinks.forEach((l, i)   => renderLinkRow(ql, l, i, 'quick'));
+    footerServiceLinks.forEach((l, i) => renderLinkRow(sl, l, i, 'service'));
+  }
+
+  function syncFooterFromDom() {
+    footerQuickLinks = Array.from(document.querySelectorAll('#footer-quicklinks-list .feature-row')).map(row => ({
+      label:  row.querySelector('.fl-label').value,
+      anchor: row.querySelector('.fl-anchor').value
+    }));
+    footerServiceLinks = Array.from(document.querySelectorAll('#footer-servicelinks-list .feature-row')).map(row => ({
+      label:  row.querySelector('.fl-label').value,
+      anchor: row.querySelector('.fl-anchor').value
+    }));
+  }
+
+  function initFooterEditor() {
+    const d = loadSection('footer');
+    footerQuickLinks   = (d.quickLinks   || []).map(l => ({ ...l }));
+    footerServiceLinks = (d.serviceLinks || []).map(l => ({ ...l }));
+
+    setVal('footer-tagline',       d.tagline       || '');
+    setVal('footer-company',       d.company       || '');
+    setVal('footer-copyright',     d.copyright     || '');
+    setVal('footer-supportEmail',  d.supportEmail  || '');
+    setVal('footer-contactPhone',  d.contactPhone  || '');
+    setVal('footer-contactEmail',  d.contactEmail  || '');
+    setVal('footer-contactLocation', d.contactLocation || '');
+    renderFooterLists();
+
+    watchInputs('footer', [
+      'footer-tagline','footer-company','footer-copyright','footer-supportEmail',
+      'footer-contactPhone','footer-contactEmail','footer-contactLocation'
+    ]);
+    document.getElementById('footer-save-btn').addEventListener('click', saveFooterEditor);
+    document.getElementById('footer-add-quick-btn').addEventListener('click', () => {
+      syncFooterFromDom();
+      footerQuickLinks.push({ label: '', anchor: '#' });
+      renderFooterLists();
+      markDirty('footer');
+    });
+    document.getElementById('footer-add-service-btn').addEventListener('click', () => {
+      syncFooterFromDom();
+      footerServiceLinks.push({ label: '', anchor: '#' });
+      renderFooterLists();
+      markDirty('footer');
+    });
+  }
+
+  function saveFooterEditor() {
+    syncFooterFromDom();
+    const email = getVal('footer-supportEmail');
+    saveSection('footer', {
+      tagline:          getVal('footer-tagline'),
+      company:          getVal('footer-company'),
+      copyright:        getVal('footer-copyright'),
+      supportEmail:     email,
+      supportEmailHref: 'mailto:' + email,
+      quickLinks:       footerQuickLinks,
+      serviceLinks:     footerServiceLinks,
+      contactPhone:     getVal('footer-contactPhone'),
+      contactWaHref:    'https://wa.me/' + getVal('footer-contactPhone').replace(/\D/g,''),
+      contactEmail:     getVal('footer-contactEmail'),
+      contactEmailHref: 'mailto:' + getVal('footer-contactEmail'),
+      contactLocation:  getVal('footer-contactLocation')
+    });
+    showToast('Footer saved ✓');
   }
 
   /* ============================================================
