@@ -15,30 +15,8 @@
 </head>
 <body>
 
-  <!-- ===================== LOGIN SCREEN ===================== -->
-  <div id="login-screen">
-    <div class="login-card">
-      <div class="login-logo">
-        <img src="images/No-BG-02.png" alt="YallaDJ Media" />
-        <h1>YallaDJ Media</h1>
-        <p>Admin Panel</p>
-      </div>
-      <form id="login-form" autocomplete="off">
-        <div class="input-group">
-          <label for="admin-password">Password</label>
-          <input type="password" id="admin-password" placeholder="Enter admin password" autocomplete="current-password" />
-        </div>
-        <div class="remember-row">
-          <label class="checkbox-label">
-            <input type="checkbox" id="remember-me" />
-            <span>Remember me</span>
-          </label>
-        </div>
-        <button type="submit" class="btn-login">Login</button>
-        <div id="login-error" class="login-error hidden">Incorrect password. Please try again.</div>
-      </form>
-    </div>
-  </div>
+  <!-- Login lives on login.html. Unauthed visitors are redirected there by
+       js/admin.js on page load (via GET /api/auth/me). -->
 
   <!-- ===================== ADMIN APP ===================== -->
   <div id="admin-app" class="hidden">

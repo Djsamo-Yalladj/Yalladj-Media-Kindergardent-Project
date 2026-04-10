@@ -103,12 +103,7 @@
   };
 
   /* ---- DOM refs ---- */
-  const loginScreen  = document.getElementById('login-screen');
   const adminApp     = document.getElementById('admin-app');
-  const loginForm    = document.getElementById('login-form');
-  const passwordInput= document.getElementById('admin-password');
-  const rememberMe   = document.getElementById('remember-me');
-  const loginError   = document.getElementById('login-error');
   const logoutBtn    = document.getElementById('logout-btn');
   const hamburger    = document.getElementById('hamburger');
   const sidebar      = document.getElementById('sidebar');
@@ -121,38 +116,33 @@
   const lastSavedTime   = document.getElementById('last-saved-time');
 
   /* ============================================================
-     AUTH
+     AUTH — cookie-based session via /api/auth/me
      ============================================================ */
-  function checkSession() {
-    const stored = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
-    return stored === 'authenticated';
-  }
-
-  function doLogin(e) {
-    e.preventDefault();
-    const pwd = passwordInput.value.trim();
-    if (pwd === getActivePassword()) {
-      const storage = rememberMe.checked ? localStorage : sessionStorage;
-      storage.setItem(SESSION_KEY, 'authenticated');
-      loginError.classList.add('hidden');
-      showApp();
-    } else {
-      loginError.classList.remove('hidden');
-      passwordInput.value = '';
-      passwordInput.focus();
-      // Shake animation
-      loginError.style.animation = 'none';
-      requestAnimationFrame(() => { loginError.style.animation = ''; });
+  // Returns the authed user+role if the session cookie is valid, else null.
+  async function checkSession() {
+    try {
+      const res = await fetch('/api/auth/me', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' },
+      });
+      if (!res.ok) return null;
+      const payload = await res.json().catch(() => null);
+      if (payload && payload.ok && payload.data) return payload.data;
+      return null;
+    } catch (_) {
+      return null;
     }
   }
 
-  function doLogout() {
-    localStorage.removeItem(SESSION_KEY);
-    sessionStorage.removeItem(SESSION_KEY);
-    adminApp.classList.add('hidden');
-    loginScreen.classList.remove('hidden');
-    passwordInput.value = '';
-    loginError.classList.add('hidden');
+  async function doLogout() {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+    } catch (_) { /* ignore — we redirect regardless */ }
+    window.location.href = 'login.html';
   }
 
   function showApp() {
@@ -295,8 +285,7 @@
      EVENT LISTENERS
      ============================================================ */
 
-  // Login form submit
-  loginForm.addEventListener('submit', doLogin);
+  // Login is handled on login.html — no inline form listener here.
 
   // Logout
   logoutBtn.addEventListener('click', doLogout);
@@ -1841,10 +1830,19 @@
   }
 
   /* ============================================================
-     INIT — check if already logged in
+     INIT — verify session against /api/auth/me, else redirect
      ============================================================ */
-  if (checkSession()) {
+  // Keep the admin UI hidden until /api/auth/me confirms a valid session.
+  // Unauthed visitors are redirected to login.html before anything renders.
+  adminApp.classList.add('hidden');
+
+  (async function bootstrapAuth() {
+    const session = await checkSession();
+    if (!session) {
+      window.location.replace('login.html');
+      return;
+    }
     showApp();
-  }
+  })();
 
 })();

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YallaDJ Media — Admin Login</title>
+
+  <!-- Google Fonts (match admin.html) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Reuse admin styles (login-card, input-group, btn-login, login-error, etc.) -->
+  <link rel="stylesheet" href="css/admin-style.css" />
+</head>
+<body>
+
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="images/No-BG-02.png" alt="YallaDJ Media" />
+        <h1>YallaDJ Media</h1>
+        <p>Admin Panel</p>
+      </div>
+
+      <form id="login-form" autocomplete="on" novalidate>
+        <div class="input-group">
+          <label for="admin-email">Email</label>
+          <input
+            type="email"
+            id="admin-email"
+            name="email"
+            placeholder="you@yalladj.com"
+            autocomplete="username"
+            required
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="admin-password">Password</label>
+          <input
+            type="password"
+            id="admin-password"
+            name="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+
+        <button type="submit" class="btn-login" id="login-submit">Login</button>
+
+        <div id="login-error" class="login-error hidden"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const form = document.getElementById('login-form');
+      const emailInput = document.getElementById('admin-email');
+      const passwordInput = document.getElementById('admin-password');
+      const submitBtn = document.getElementById('login-submit');
+      const errorBox = document.getElementById('login-error');
+
+      function showError(message) {
+        errorBox.textContent = message;
+        errorBox.classList.remove('hidden');
+      }
+
+      function clearError() {
+        errorBox.textContent = '';
+        errorBox.classList.add('hidden');
+      }
+
+      function setLoading(isLoading) {
+        submitBtn.disabled = isLoading;
+        submitBtn.textContent = isLoading ? 'Signing in…' : 'Login';
+        submitBtn.style.opacity = isLoading ? '0.75' : '1';
+        submitBtn.style.cursor = isLoading ? 'wait' : 'pointer';
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        clearError();
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!email || !password) {
+          showError('Please enter both email and password.');
+          return;
+        }
+
+        setLoading(true);
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ email, password }),
+          });
+
+          let payload = null;
+          try { payload = await res.json(); } catch (_) { /* non-JSON */ }
+
+          if (res.ok && payload && payload.ok) {
+            window.location.href = 'admin.html';
+            return;
+          }
+
+          if (res.status === 401) {
+            showError('Incorrect email or password.');
+          } else if (payload && payload.error) {
+            showError('Login failed: ' + payload.error);
+          } else {
+            showError('Login failed. Please try again.');
+          }
+        } catch (err) {
+          showError('Network error. Please check your connection and try again.');
+        } finally {
+          setLoading(false);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
