@@ -97,6 +97,15 @@ enum AuditSeverity {
   critical
 }
 
+// Execution status for a single audit run (Phase C)
+enum AuditRunStatus {
+  queued
+  running
+  completed
+  failed
+  cancelled
+}
+
 // Claude Code automation status on project_specs
 enum ClaudeCodeStatus {
   not_started
@@ -598,11 +607,50 @@ model AuditReport {
   createdById    String?       @map("created_by")
   updatedById    String?       @map("updated_by")
 
+  run            AuditRun?
+
   @@index([nurseryId])
   @@index([projectId])
   @@index([leadId])
   @@index([maxSeverity])
   @@map("audit_reports")
+}
+
+// One execution of the audit engine against a target URL (Phase C).
+// Tracks lifecycle: queued → running → completed/failed/cancelled.
+// Results (scores, issues, recommendations) live on the linked AuditReport row
+// which is created when the run completes successfully. Failed runs keep a
+// null reportId and a populated errorMessage.
+model AuditRun {
+  id             String         @id @default(cuid())
+  nurseryId      String?        @map("nursery_id")
+  projectId      String?        @map("project_id")
+  leadId         String?        @map("lead_id")
+  targetUrl      String         @map("target_url")
+  status         AuditRunStatus @default(queued)
+  engineVersion  String         @map("engine_version") // e.g. "c2.v1"
+  triggeredBy    String?        @map("triggered_by")   // user id / "bot" / "cron"
+  triggerSource  String?        @map("trigger_source") // "manual" / "scheduled" / "post_launch"
+  queuedAt       DateTime       @default(now()) @map("queued_at")
+  startedAt      DateTime?      @map("started_at")
+  finishedAt     DateTime?      @map("finished_at")
+  durationMs     Int?           @map("duration_ms")
+  errorMessage   String?        @map("error_message")
+  errorStack     String?        @map("error_stack")
+  attemptCount   Int            @default(1) @map("attempt_count")
+  reportId       String?        @unique @map("report_id")
+  metadata       Json?          // extra context (user agent, request ip, options)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  report         AuditReport?   @relation(fields: [reportId], references: [id])
+
+  @@index([nurseryId])
+  @@index([projectId])
+  @@index([leadId])
+  @@index([status])
+  @@index([queuedAt])
+  @@map("audit_runs")
 }
 
 // Append-only system activity log (who did what, when).
