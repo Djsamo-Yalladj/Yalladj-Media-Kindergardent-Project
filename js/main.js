@@ -177,6 +177,7 @@ const DEFAULTS = {
   },
   app: {
     show: false,
+    badge: "Included with Growth Package",
     title: 'Manage Your <span class="lime-text">Nursery App</span>',
     subtitle: "A dedicated admin app included with the Growth package.",
     features: ["Real-time content updates", "Bilingual content control", "Push notifications", "Enrolment management"],
@@ -299,6 +300,7 @@ function loadContent() {
   renderProcessSteps(D.process);
   renderTrustCards(D.trust);
   renderPortfolioCards(D.portfolio);
+  renderAppShowcase(D.app);
   renderUpsellAddons(D.upsell);
   renderFooterLinks(D.footer);
 
@@ -435,6 +437,20 @@ function renderPortfolioCards(data) {
       a.innerHTML = `<i class="bi bi-whatsapp"></i> ${escHtml(data.demoBtn)}`;
       if (data.demoWaLink) a.setAttribute('href', data.demoWaLink);
     }
+  }
+}
+
+function renderAppShowcase(data) {
+  const section = document.getElementById('app-showcase');
+  if (!section || !data) return;
+
+  // Show/hide the whole section
+  section.style.display = data.show === true ? '' : 'none';
+
+  // Render features list
+  const featList = document.getElementById('app-features');
+  if (featList && Array.isArray(data.features)) {
+    featList.innerHTML = data.features.map(f => `<li>${escHtml(f)}</li>`).join('');
   }
 }
 

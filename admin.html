@@ -460,10 +460,35 @@
         </section>
 
         <section id="section-packages" class="admin-section">
-          <div class="coming-soon-placeholder">
-            <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
-            <h3>Packages Editor</h3>
-            <p>Coming in sub-step 11D</p>
+          <div class="editor-header">
+            <div>
+              <h2 class="editor-title">Packages Editor</h2>
+              <p class="editor-desc">Edit pricing cards shown on the sales page. Reorder, show/hide, or add new packages.</p>
+            </div>
+            <button class="btn-save" id="packages-save-btn">
+              <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Packages
+            </button>
+          </div>
+
+          <div class="editor-card">
+            <h3 class="editor-card-title">Section Heading</h3>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Title <small>(HTML ok — wrap lime text in &lt;span class="lime-text"&gt;...&lt;/span&gt;)</small></label>
+                <input type="text" id="packages-title" placeholder='Simple, &lt;span class="lime-text"&gt;Transparent Pricing&lt;/span&gt;' />
+              </div>
+              <div class="form-group">
+                <label>Subtitle</label>
+                <input type="text" id="packages-subtitle" placeholder="All packages include..." />
+              </div>
+            </div>
+          </div>
+
+          <div id="packages-cards-list"></div>
+
+          <div style="text-align:center; margin-top:16px;">
+            <button class="btn-add-card" id="packages-add-btn">+ Add Package</button>
           </div>
         </section>
 

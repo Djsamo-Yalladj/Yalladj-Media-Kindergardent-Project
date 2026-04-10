@@ -137,6 +137,7 @@
       if      (sectionId === 'hero')     initHeroEditor();
       else if (sectionId === 'pain')     initPainEditor();
       else if (sectionId === 'services') initServicesEditor();
+      else if (sectionId === 'packages') initPackagesEditor();
     }
   }
 
@@ -610,6 +611,303 @@
       cards
     });
     showToast('Services saved ✓');
+  }
+
+  /* ============================================================
+     PACKAGES EDITOR
+     ============================================================ */
+
+  let pkgCards = [];
+
+  const PKG_DEFAULTS = [
+    {
+      name: 'Starter', price: 'AED 2,500', priceSuffix: 'one-time',
+      desc: 'Perfect for new nurseries getting their online presence off the ground quickly.',
+      featured: false, ribbon: '',
+      features: [
+        { text: 'Up to 5 pages', check: true },
+        { text: 'Mobile responsive', check: true },
+        { text: 'English + Arabic', check: true },
+        { text: 'Contact & inquiry form', check: true },
+        { text: 'Google Maps integration', check: true },
+        { text: 'WhatsApp button', check: true },
+        { text: 'Basic SEO setup', check: true },
+        { text: '7-day delivery', check: true },
+        { text: '30-day support', check: true },
+        { text: 'Photo/video section', check: false },
+        { text: 'Blog / news section', check: false },
+        { text: 'Online enrolment form', check: false }
+      ],
+      btnText: 'Get Started', btnLink: '#contact', btnStyle: 'outline', show: true
+    },
+    {
+      name: 'Growth', price: 'AED 4,500', priceSuffix: 'one-time',
+      desc: 'The full package — everything a growing nursery needs to attract and convert parents online.',
+      featured: true, ribbon: 'Most Popular',
+      features: [
+        { text: 'Up to 10 pages', check: true },
+        { text: 'Mobile responsive', check: true },
+        { text: 'English + Arabic', check: true },
+        { text: 'Online enrolment form', check: true },
+        { text: 'Photo & video gallery', check: true },
+        { text: 'Blog / news section', check: true },
+        { text: 'WhatsApp + social links', check: true },
+        { text: 'Advanced SEO setup', check: true },
+        { text: 'Google Analytics connected', check: true },
+        { text: 'Speed optimization', check: true },
+        { text: '7-day delivery', check: true },
+        { text: '60-day support', check: true }
+      ],
+      btnText: 'Get Started', btnLink: '#contact', btnStyle: 'lime', show: true
+    },
+    {
+      name: 'Redesign', price: 'from AED 1,800', priceSuffix: '',
+      desc: 'Have an existing website? We modernize it completely — faster, more beautiful, and conversion-optimized.',
+      featured: false, ribbon: '',
+      features: [
+        { text: 'Full visual overhaul', check: true },
+        { text: 'All existing content migrated', check: true },
+        { text: 'Mobile responsiveness', check: true },
+        { text: 'Add missing Arabic version', check: true },
+        { text: 'Speed & SEO improvements', check: true },
+        { text: 'Modern forms & WhatsApp', check: true },
+        { text: 'Price based on scope', check: true },
+        { text: 'Free consultation call', check: true },
+        { text: '45-day support', check: true }
+      ],
+      btnText: 'Get a Quote',
+      btnLink: 'https://wa.me/971544503515?text=Hi%20YallaDJ%20Media!%20I%27d%20like%20a%20quote%20to%20redesign%20my%20nursery%20website.',
+      btnStyle: 'outline-wa', show: true
+    }
+  ];
+
+  function initPackagesEditor() {
+    const d = loadSection('packages');
+    setVal('packages-title',    d.title    || '');
+    setVal('packages-subtitle', d.subtitle || '');
+
+    pkgCards = (d.cards && d.cards.length)
+      ? d.cards.map(c => JSON.parse(JSON.stringify(c)))
+      : PKG_DEFAULTS.map(c => JSON.parse(JSON.stringify(c)));
+
+    renderPkgCards();
+    watchInputs('packages', ['packages-title', 'packages-subtitle']);
+    document.getElementById('packages-save-btn').addEventListener('click', savePkgEditor);
+    document.getElementById('packages-add-btn').addEventListener('click', addPkgCard);
+  }
+
+  function renderPkgCards() {
+    const list = document.getElementById('packages-cards-list');
+    list.innerHTML = '';
+    pkgCards.forEach((card, i) => list.appendChild(buildPkgCardEl(card, i)));
+  }
+
+  function buildPkgCardEl(card, index) {
+    const total   = pkgCards.length;
+    const isFirst = index === 0;
+    const isLast  = index === total - 1;
+    const visible  = card.show !== false;
+    const featured = card.featured === true;
+
+    const div = document.createElement('div');
+    div.className = 'card-editor-item';
+
+    div.innerHTML =
+      '<div class="card-editor-header">' +
+        '<span class="card-num">Package ' + (index + 1) + ' — <strong>' + escHtml(card.name || '') + '</strong></span>' +
+        '<div class="card-actions">' +
+          '<button class="btn-icon btn-up" title="Move up"'    + (isFirst ? ' disabled' : '') + '>&#8593;</button>' +
+          '<button class="btn-icon btn-down" title="Move down"' + (isLast  ? ' disabled' : '') + '>&#8595;</button>' +
+          '<label class="toggle-label">' +
+            '<input type="checkbox" class="pkg-featured"' + (featured ? ' checked' : '') + '>' +
+            '<span class="vis-text" style="color:#ffc136">' + (featured ? '★ Featured' : '☆ Normal') + '</span>' +
+          '</label>' +
+          '<label class="toggle-label">' +
+            '<input type="checkbox" class="pkg-visible"' + (visible ? ' checked' : '') + '>' +
+            '<span class="vis-text">' + (visible ? 'Visible' : 'Hidden') + '</span>' +
+          '</label>' +
+          '<button class="btn-icon btn-delete" title="Delete">&#10005;</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="form-row two-col">' +
+        '<div class="form-group">' +
+          '<label>Package Name</label>' +
+          '<input type="text" class="pkg-name-inp" value="' + escHtml(card.name || '') + '" placeholder="Starter" />' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Price</label>' +
+          '<input type="text" class="pkg-price-inp" value="' + escHtml(card.price || '') + '" placeholder="AED 2,500" />' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="form-row two-col">' +
+        '<div class="form-group">' +
+          '<label>Price Suffix <small>(e.g. "one-time", leave blank to hide)</small></label>' +
+          '<input type="text" class="pkg-suffix-inp" value="' + escHtml(card.priceSuffix || '') + '" placeholder="one-time" />' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Ribbon Badge <small>(e.g. "Most Popular", leave blank to hide)</small></label>' +
+          '<input type="text" class="pkg-ribbon-inp" value="' + escHtml(card.ribbon || '') + '" placeholder="Most Popular" />' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="form-group">' +
+        '<label>Description</label>' +
+        '<textarea class="pkg-desc-inp" rows="2" placeholder="Short description of this package">' + escHtml(card.desc || '') + '</textarea>' +
+      '</div>' +
+
+      '<div class="form-row two-col">' +
+        '<div class="form-group">' +
+          '<label>Button Text</label>' +
+          '<input type="text" class="pkg-btn-text-inp" value="' + escHtml(card.btnText || '') + '" placeholder="Get Started" />' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Button Link</label>' +
+          '<input type="text" class="pkg-btn-link-inp" value="' + escHtml(card.btnLink || '') + '" placeholder="#contact" />' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="form-group">' +
+        '<label>Button Style</label>' +
+        '<select class="pkg-btn-style-inp">' +
+          '<option value="outline"'    + (card.btnStyle === 'outline'    ? ' selected' : '') + '>Outline (default)</option>' +
+          '<option value="lime"'       + (card.btnStyle === 'lime'       ? ' selected' : '') + '>Lime (green fill)</option>' +
+          '<option value="outline-wa"' + (card.btnStyle === 'outline-wa' ? ' selected' : '') + '>WhatsApp Outline</option>' +
+        '</select>' +
+      '</div>' +
+
+      '<div class="form-group">' +
+        '<label>Features List <small>(check = included, uncheck = not included/greyed)</small></label>' +
+        '<div class="pkg-features-list"></div>' +
+        '<button type="button" class="btn-add-feature pkg-add-feat-btn">+ Add Feature</button>' +
+      '</div>';
+
+    // Render features
+    const featuresList = div.querySelector('.pkg-features-list');
+    (card.features || []).forEach(f => addPkgFeatureRow(featuresList, f.text, f.check));
+
+    // Events
+    div.querySelector('.btn-up').addEventListener('click',    () => movePkgCard(index, -1));
+    div.querySelector('.btn-down').addEventListener('click',  () => movePkgCard(index, 1));
+    div.querySelector('.btn-delete').addEventListener('click',() => deletePkgCard(index));
+
+    div.querySelector('.pkg-featured').addEventListener('change', function () {
+      div.querySelector('.pkg-featured').closest('.card-actions')
+        .querySelector('[style*="ffc136"]').textContent = this.checked ? '★ Featured' : '☆ Normal';
+      markDirty('packages');
+    });
+    div.querySelector('.pkg-visible').addEventListener('change', function () {
+      const vt = this.closest('.card-actions').querySelectorAll('.vis-text');
+      vt[vt.length - 1].textContent = this.checked ? 'Visible' : 'Hidden';
+      markDirty('packages');
+    });
+
+    ['pkg-name-inp','pkg-price-inp','pkg-suffix-inp','pkg-ribbon-inp','pkg-desc-inp',
+     'pkg-btn-text-inp','pkg-btn-link-inp','pkg-btn-style-inp'].forEach(cls => {
+      const el = div.querySelector('.' + cls);
+      if (el) el.addEventListener('input', () => markDirty('packages'));
+      if (el) el.addEventListener('change', () => markDirty('packages'));
+    });
+
+    div.querySelector('.pkg-add-feat-btn').addEventListener('click', () => {
+      addPkgFeatureRow(div.querySelector('.pkg-features-list'), '', true);
+      markDirty('packages');
+    });
+
+    return div;
+  }
+
+  function addPkgFeatureRow(listEl, text, checked) {
+    const row = document.createElement('div');
+    row.className = 'feature-row';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = checked !== false;
+    cb.title = 'Included?';
+    cb.style.cssText = 'width:16px;height:16px;flex-shrink:0;cursor:pointer;accent-color:#AFFF00';
+    cb.addEventListener('change', () => markDirty('packages'));
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = text || '';
+    input.placeholder = 'Feature text';
+    input.addEventListener('input', () => markDirty('packages'));
+
+    const del = document.createElement('button');
+    del.className = 'btn-icon btn-delete';
+    del.title = 'Remove';
+    del.innerHTML = '&#10005;';
+    del.addEventListener('click', () => { row.remove(); markDirty('packages'); });
+
+    row.appendChild(cb);
+    row.appendChild(input);
+    row.appendChild(del);
+    listEl.appendChild(row);
+  }
+
+  function syncPkgFromDom() {
+    document.querySelectorAll('#packages-cards-list .card-editor-item').forEach((el, i) => {
+      const featureRows = el.querySelectorAll('.pkg-features-list .feature-row');
+      pkgCards[i] = {
+        name:       el.querySelector('.pkg-name-inp').value,
+        price:      el.querySelector('.pkg-price-inp').value,
+        priceSuffix:el.querySelector('.pkg-suffix-inp').value,
+        ribbon:     el.querySelector('.pkg-ribbon-inp').value,
+        desc:       el.querySelector('.pkg-desc-inp').value,
+        btnText:    el.querySelector('.pkg-btn-text-inp').value,
+        btnLink:    el.querySelector('.pkg-btn-link-inp').value,
+        btnStyle:   el.querySelector('.pkg-btn-style-inp').value,
+        featured:   el.querySelector('.pkg-featured').checked,
+        show:       el.querySelector('.pkg-visible').checked,
+        features:   Array.from(featureRows).map(r => ({
+          text:  r.querySelector('input[type="text"]').value,
+          check: r.querySelector('input[type="checkbox"]').checked
+        })).filter(f => f.text.trim() !== '')
+      };
+    });
+  }
+
+  function movePkgCard(index, dir) {
+    syncPkgFromDom();
+    const target = index + dir;
+    if (target < 0 || target >= pkgCards.length) return;
+    [pkgCards[index], pkgCards[target]] = [pkgCards[target], pkgCards[index]];
+    renderPkgCards();
+    markDirty('packages');
+  }
+
+  function deletePkgCard(index) {
+    if (pkgCards.length <= 1) { showToast('Need at least 1 package'); return; }
+    syncPkgFromDom();
+    pkgCards.splice(index, 1);
+    renderPkgCards();
+    markDirty('packages');
+  }
+
+  function addPkgCard() {
+    syncPkgFromDom();
+    pkgCards.push({
+      name: 'New Package', price: 'AED 0', priceSuffix: 'one-time',
+      desc: 'Describe this package.', featured: false, ribbon: '',
+      features: [{ text: 'Feature 1', check: true }],
+      btnText: 'Get Started', btnLink: '#contact', btnStyle: 'outline', show: true
+    });
+    renderPkgCards();
+    markDirty('packages');
+    const list = document.getElementById('packages-cards-list');
+    if (list.lastElementChild) list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function savePkgEditor() {
+    syncPkgFromDom();
+    saveSection('packages', {
+      title:    getVal('packages-title'),
+      subtitle: getVal('packages-subtitle'),
+      cards:    pkgCards
+    });
+    showToast('Packages saved ✓');
   }
 
   /* ============================================================
