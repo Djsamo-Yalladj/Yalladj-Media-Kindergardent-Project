@@ -1,0 +1,774 @@
+// YallaDJ Media — Nursery Platform V2
+// Prisma schema — Phase A1.3a (header + enums only, no tables yet)
+// See NURSERY_PLATFORM_V2_PLAN.md for full context.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+// Lead pipeline status (intake form → qualified → converted)
+enum LeadStatus {
+  new
+  contacted
+  qualified
+  proposal_sent
+  won
+  lost
+  archived
+}
+
+// Project kanban stage
+enum ProjectStage {
+  lead
+  spec
+  design
+  build
+  review
+  launched
+  archived
+}
+
+// Package tier offered to nurseries
+enum PackageType {
+  starter
+  standard
+  premium
+  custom
+}
+
+// Post-launch ticket classification
+enum TicketType {
+  bug
+  content_update
+  support
+  feature_request
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+  urgent
+}
+
+enum TicketStatus {
+  open
+  in_progress
+  waiting_client
+  resolved
+  closed
+}
+
+// NOTE: ContractType is NOT an enum — it's a lookup table (ContractTypeDef)
+// so admins can add/edit/disable contract types from the dashboard at runtime.
+
+enum ContractStatus {
+  active
+  paused
+  expired
+  cancelled
+}
+
+// Handover / delivery archive
+enum HandoverType {
+  code_handover
+  asset_bundle
+  final_delivery
+  archive
+}
+
+// Audit severity for issues found in audit_reports
+enum AuditSeverity {
+  info
+  low
+  medium
+  high
+  critical
+}
+
+// Claude Code automation status on project_specs
+enum ClaudeCodeStatus {
+  not_started
+  brief_ready
+  in_progress
+  completed
+  failed
+}
+
+// AI learning source (what kind of data was fed into the bot)
+enum LearningSourceType {
+  project
+  proposal
+  audit
+  client_feedback
+  manual_note
+}
+
+// AI conversation context (where the chat happened)
+enum ConversationContext {
+  internal_assistant
+  client_sales_bot
+  lead_qualifier
+  proposal_writer
+  content_generator
+}
+
+// Polymorphic file owner table
+enum FileLinkedTable {
+  nurseries
+  projects
+  project_specs
+  deliverables
+  tickets
+  handovers
+  leads
+  users
+  content_blocks
+  audit_reports
+}
+
+// ============================================================
+// AUTH — roles, users, sessions
+// ============================================================
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique // admin / manager / designer / sales
+  label       Json     // {en: "...", ar: "..."}
+  permissions Json     // editable permissions map
+  isSystem    Boolean  @default(false) @map("is_system") // system roles can't be deleted
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  name          String
+  phone         String?
+  avatarUrl     String?  @map("avatar_url")
+  roleId        String   @map("role_id")
+  isActive      Boolean  @default(true) @map("is_active")
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdById   String?  @map("created_by")
+  updatedById   String?  @map("updated_by")
+
+  role          Role     @relation(fields: [roleId], references: [id])
+  sessions      Session[]
+
+  @@index([roleId])
+  @@index([email])
+  @@map("users")
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  token      String   @unique
+  expiresAt  DateTime @map("expires_at")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+// ============================================================
+// CLIENTS PIPELINE — leads, nurseries
+// ============================================================
+
+model Lead {
+  id            String     @id @default(cuid())
+  nurseryName   String     @map("nursery_name")
+  contactName   String     @map("contact_name")
+  email         String
+  phone         String?
+  country       String?
+  city          String?
+  website       String?
+  source        String?    // where the lead came from (form, referral, ad, etc.)
+  budget        Decimal?   @db.Decimal(12, 2) // AED
+  packageInterest PackageType? @map("package_interest")
+  notes         String?
+  status        LeadStatus @default(new)
+  assignedToId  String?    @map("assigned_to")
+  qualifiedAt   DateTime?  @map("qualified_at")
+  convertedAt   DateTime?  @map("converted_at")
+  nurseryId     String?    @unique @map("nursery_id") // set when converted
+  intakeData    Json?      @map("intake_data") // raw intake form payload
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  deletedAt     DateTime?  @map("deleted_at")
+  createdById   String?    @map("created_by")
+  updatedById   String?    @map("updated_by")
+
+  nursery       Nursery?   @relation(fields: [nurseryId], references: [id])
+
+  @@index([status])
+  @@index([assignedToId])
+  @@index([email])
+  @@map("leads")
+}
+
+model Nursery {
+  id              String    @id @default(cuid())
+  name            String
+  nameAr          String?   @map("name_ar")
+  slug            String    @unique
+  logoUrl         String?   @map("logo_url")
+  email           String?
+  phone           String?
+  whatsapp        String?
+  country         String?
+  city            String?
+  address         String?
+  website         String?
+  instagram       String?
+  facebook        String?
+  tiktok          String?
+  contactName     String?   @map("contact_name")
+  contactRole     String?   @map("contact_role")
+  packageType     PackageType? @map("package_type")
+  contractValue   Decimal?  @db.Decimal(12, 2) @map("contract_value") // AED
+  brandColors     Json?     @map("brand_colors") // {primary, secondary, accent}
+  brandFonts      Json?     @map("brand_fonts")
+  description     Json?     // {en, ar}
+  tags            String[]  @default([])
+  isActive        Boolean   @default(true) @map("is_active")
+  onboardedAt     DateTime? @map("onboarded_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+  createdById     String?   @map("created_by")
+  updatedById     String?   @map("updated_by")
+
+  lead            Lead?
+
+  @@index([slug])
+  @@index([isActive])
+  @@map("nurseries")
+}
+
+// ============================================================
+// BUILD PROJECTS — projects, project_specs, project_stages, deliverables
+// ============================================================
+
+model Project {
+  id              String       @id @default(cuid())
+  nurseryId       String       @map("nursery_id")
+  name            String
+  slug            String       @unique
+  description     Json?        // {en, ar}
+  packageType     PackageType  @map("package_type")
+  stage           ProjectStage @default(lead)
+  contractValue   Decimal?     @db.Decimal(12, 2) @map("contract_value") // AED
+  startDate       DateTime?    @map("start_date")
+  targetLaunchDate DateTime?   @map("target_launch_date")
+  launchedAt      DateTime?    @map("launched_at")
+  assignedToId    String?      @map("assigned_to")
+  progressPercent Int          @default(0) @map("progress_percent")
+  liveUrl         String?      @map("live_url")
+  repoUrl         String?      @map("repo_url")
+  notes           String?
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  deletedAt       DateTime?    @map("deleted_at")
+  createdById     String?      @map("created_by")
+  updatedById     String?      @map("updated_by")
+
+  spec            ProjectSpec?
+  stages          ProjectStageRecord[]
+  deliverables    Deliverable[]
+
+  @@index([nurseryId])
+  @@index([stage])
+  @@index([assignedToId])
+  @@map("projects")
+}
+
+model ProjectSpec {
+  id                 String           @id @default(cuid())
+  projectId          String           @unique @map("project_id")
+  brandColors        Json?            @map("brand_colors")
+  brandFonts         Json?            @map("brand_fonts")
+  logoUrl            String?          @map("logo_url")
+  pages              Json?            // [{slug, title_en, title_ar, sections}]
+  features           Json?            // list of enabled features
+  integrations       Json?            // 3rd-party integrations
+  contentPlan        Json?            @map("content_plan")
+  targetAudience     Json?            @map("target_audience")
+  referenceSites     String[]         @default([]) @map("reference_sites")
+  briefEn            String?          @map("brief_en")
+  briefAr            String?          @map("brief_ar")
+  claudeCodeBrief    String?          @map("claude_code_brief") // generated prompt for Claude Code
+  claudeCodeStatus   ClaudeCodeStatus @default(not_started) @map("claude_code_status")
+  claudeCodeLog      Json?            @map("claude_code_log")
+  approvedAt         DateTime?        @map("approved_at")
+  approvedById       String?          @map("approved_by")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  deletedAt          DateTime?        @map("deleted_at")
+  createdById        String?          @map("created_by")
+  updatedById        String?          @map("updated_by")
+
+  project            Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_specs")
+}
+
+model ProjectStageRecord {
+  id          String       @id @default(cuid())
+  projectId   String       @map("project_id")
+  stage       ProjectStage
+  enteredAt   DateTime     @default(now()) @map("entered_at")
+  exitedAt    DateTime?    @map("exited_at")
+  durationHours Int?       @map("duration_hours") // computed on exit
+  notes       String?
+  changedById String?      @map("changed_by")
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([stage])
+  @@map("project_stages")
+}
+
+model Deliverable {
+  id          String    @id @default(cuid())
+  projectId   String    @map("project_id")
+  title       String
+  titleAr     String?   @map("title_ar")
+  description String?
+  type        String    // mockup / asset / document / code / other
+  fileUrl     String?   @map("file_url")
+  previewUrl  String?   @map("preview_url")
+  version     Int       @default(1)
+  isApproved  Boolean   @default(false) @map("is_approved")
+  approvedAt  DateTime? @map("approved_at")
+  approvedById String?  @map("approved_by")
+  deliveredAt DateTime? @map("delivered_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  createdById String?   @map("created_by")
+  updatedById String?   @map("updated_by")
+
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([type])
+  @@map("deliverables")
+}
+
+// ============================================================
+// POST-LAUNCH — tickets, contract_types, service_contracts, handovers
+// ============================================================
+
+// Lookup table for contract types (editable from admin panel).
+// Seed with: monthly_support, yearly_contract, one_time_handover
+model ContractTypeDef {
+  id            String   @id @default(cuid())
+  key           String   @unique // machine-readable, e.g. "monthly_support"
+  label         Json     // {en, ar}
+  description   Json?    // {en, ar}
+  defaultPrice  Decimal? @db.Decimal(12, 2) @map("default_price") // AED
+  billingCycle  String?  @map("billing_cycle") // monthly / yearly / one_time
+  sortOrder     Int      @default(0) @map("sort_order")
+  isActive      Boolean  @default(true) @map("is_active")
+  isSystem      Boolean  @default(false) @map("is_system") // system entries can't be deleted
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdById   String?  @map("created_by")
+  updatedById   String?  @map("updated_by")
+
+  contracts     ServiceContract[]
+
+  @@index([isActive])
+  @@map("contract_types")
+}
+
+model Ticket {
+  id             String         @id @default(cuid())
+  nurseryId      String         @map("nursery_id")
+  projectId      String?        @map("project_id")
+  title          String
+  description    String
+  type           TicketType
+  priority       TicketPriority @default(medium)
+  status         TicketStatus   @default(open)
+  assignedToId   String?        @map("assigned_to")
+  reportedById   String?        @map("reported_by")
+  reportedEmail  String?        @map("reported_email") // if reported by non-user (client)
+  dueAt          DateTime?      @map("due_at")
+  resolvedAt     DateTime?      @map("resolved_at")
+  closedAt       DateTime?      @map("closed_at")
+  resolutionNote String?        @map("resolution_note")
+  tags           String[]       @default([])
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  deletedAt      DateTime?      @map("deleted_at")
+  createdById    String?        @map("created_by")
+  updatedById    String?        @map("updated_by")
+
+  @@index([nurseryId])
+  @@index([projectId])
+  @@index([status])
+  @@index([assignedToId])
+  @@map("tickets")
+}
+
+model ServiceContract {
+  id              String         @id @default(cuid())
+  nurseryId       String         @map("nursery_id")
+  projectId       String?        @map("project_id")
+  contractTypeId  String         @map("contract_type_id")
+  title           String
+  amount          Decimal        @db.Decimal(12, 2) // AED
+  billingCycle    String?        @map("billing_cycle") // monthly / yearly / one_time
+  status          ContractStatus @default(active)
+  startDate       DateTime       @map("start_date")
+  endDate         DateTime?      @map("end_date")
+  renewsAt        DateTime?      @map("renews_at")
+  autoRenew       Boolean        @default(false) @map("auto_renew")
+  cancelledAt     DateTime?      @map("cancelled_at")
+  cancelReason    String?        @map("cancel_reason")
+  terms           Json?          // structured terms / SLA
+  notes           String?
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  deletedAt       DateTime?      @map("deleted_at")
+  createdById     String?        @map("created_by")
+  updatedById     String?        @map("updated_by")
+
+  contractType    ContractTypeDef @relation(fields: [contractTypeId], references: [id])
+
+  @@index([nurseryId])
+  @@index([projectId])
+  @@index([status])
+  @@index([contractTypeId])
+  @@map("service_contracts")
+}
+
+model Handover {
+  id            String       @id @default(cuid())
+  nurseryId     String       @map("nursery_id")
+  projectId     String?      @map("project_id")
+  type          HandoverType
+  title         String
+  description   String?
+  archiveUrl    String?      @map("archive_url") // zip / tarball
+  manifest      Json?        // list of files + checksums
+  sizeBytes     BigInt?      @map("size_bytes")
+  deliveredAt   DateTime?    @map("delivered_at")
+  deliveredToEmail String?   @map("delivered_to_email")
+  acknowledgedAt DateTime?   @map("acknowledged_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  deletedAt     DateTime?    @map("deleted_at")
+  createdById   String?      @map("created_by")
+  updatedById   String?      @map("updated_by")
+
+  @@index([nurseryId])
+  @@index([projectId])
+  @@index([type])
+  @@map("handovers")
+}
+
+// ============================================================
+// CONTENT & TEMPLATES — content_blocks, site_templates
+// ============================================================
+
+// Reusable content snippets (hero copy, testimonials, CTA sections, etc.)
+// Used across proposals, demo sites, and generated nursery sites.
+model ContentBlock {
+  id            String   @id @default(cuid())
+  key           String   @unique // machine-readable, e.g. "hero_welcome"
+  category      String   // hero / about / cta / testimonial / feature / faq / footer
+  titleEn       String?  @map("title_en")
+  titleAr       String?  @map("title_ar")
+  bodyEn        String?  @map("body_en")
+  bodyAr        String?  @map("body_ar")
+  mediaUrl      String?  @map("media_url")
+  metadata      Json?    // extra structured fields
+  tags          String[] @default([])
+  isGlobal      Boolean  @default(false) @map("is_global") // shared vs nursery-specific
+  nurseryId     String?  @map("nursery_id") // null = global
+  isActive      Boolean  @default(true) @map("is_active")
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdById   String?  @map("created_by")
+  updatedById   String?  @map("updated_by")
+
+  @@index([category])
+  @@index([nurseryId])
+  @@index([isGlobal])
+  @@map("content_blocks")
+}
+
+// Reusable site templates (starter, standard, premium) used as a base
+// for new nursery builds. Stores pages, sections, and default content refs.
+model SiteTemplate {
+  id            String      @id @default(cuid())
+  key           String      @unique // e.g. "starter_v1"
+  name          String
+  nameAr        String?     @map("name_ar")
+  description   Json?       // {en, ar}
+  packageType   PackageType @map("package_type")
+  version       String      @default("1.0.0")
+  thumbnailUrl  String?     @map("thumbnail_url")
+  previewUrl    String?     @map("preview_url")
+  pages         Json        // [{slug, title_en, title_ar, sections: [...]}]
+  defaultBrand  Json?       @map("default_brand") // colors + fonts
+  features      Json?       // list of included features
+  contentRefs   Json?       @map("content_refs") // default ContentBlock keys per section
+  repoUrl       String?     @map("repo_url") // optional source repo
+  isActive      Boolean     @default(true) @map("is_active")
+  isDefault     Boolean     @default(false) @map("is_default") // one default per package
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  deletedAt     DateTime?   @map("deleted_at")
+  createdById   String?     @map("created_by")
+  updatedById   String?     @map("updated_by")
+
+  @@index([packageType])
+  @@index([isActive])
+  @@map("site_templates")
+}
+
+// ============================================================
+// AUDIT & LOGS — audit_reports, audit_logs
+// ============================================================
+
+// Website audits run against a nursery's live site (SEO, perf, a11y, content).
+// Generated by the audit bot (Phase C) and reviewed by the team.
+model AuditReport {
+  id             String        @id @default(cuid())
+  nurseryId      String?       @map("nursery_id") // null for standalone/lead audits
+  projectId      String?       @map("project_id")
+  leadId         String?       @map("lead_id") // for pre-sale audits
+  targetUrl      String        @map("target_url")
+  title          String
+  summaryEn      String?       @map("summary_en")
+  summaryAr      String?       @map("summary_ar")
+  overallScore   Int?          @map("overall_score") // 0-100
+  seoScore       Int?          @map("seo_score")
+  perfScore      Int?          @map("perf_score")
+  a11yScore      Int?          @map("a11y_score")
+  contentScore   Int?          @map("content_score")
+  maxSeverity    AuditSeverity @default(info) @map("max_severity")
+  issues         Json?         // [{severity, category, title, description, fix}]
+  recommendations Json?        // [{title, priority, effort, impact}]
+  rawData        Json?         @map("raw_data") // lighthouse / crawler output
+  screenshotUrl  String?       @map("screenshot_url")
+  reportUrl      String?       @map("report_url") // generated PDF
+  generatedBy    String?       @map("generated_by") // "bot" / user id
+  sentToClient   Boolean       @default(false) @map("sent_to_client")
+  sentAt         DateTime?     @map("sent_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
+  createdById    String?       @map("created_by")
+  updatedById    String?       @map("updated_by")
+
+  @@index([nurseryId])
+  @@index([projectId])
+  @@index([leadId])
+  @@index([maxSeverity])
+  @@map("audit_reports")
+}
+
+// Append-only system activity log (who did what, when).
+// Covers user actions, bot actions, API events. Never soft-deleted.
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorType    String   @map("actor_type") // user / bot / system / api
+  actorId      String?  @map("actor_id")
+  actorLabel   String?  @map("actor_label") // cached display name
+  action       String   // e.g. "lead.created", "project.stage_changed", "contract.cancelled"
+  entityTable  String?  @map("entity_table") // which table was affected
+  entityId     String?  @map("entity_id")
+  entityLabel  String?  @map("entity_label") // cached display name
+  changes      Json?    // {before, after} diff
+  metadata     Json?    // extra context
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entityTable, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================================
+// AI — ai_learnings, ai_conversations, ai_translations
+// ============================================================
+
+// Knowledge base fed into the internal learning bot.
+// Each entry has a pgvector embedding for semantic search.
+model AiLearning {
+  id             String             @id @default(cuid())
+  sourceType     LearningSourceType @map("source_type")
+  sourceId       String?            @map("source_id") // id of the originating record
+  title          String
+  content        String             // the actual text chunk
+  contentAr      String?            @map("content_ar")
+  summary        String?
+  tags           String[]           @default([])
+  category       String?            // topic grouping
+  language       String             @default("en") // en / ar / mixed
+  embedding      Unsupported("vector(768)")? // Gemini text-embedding-004 (768 dims)
+  tokenCount     Int?               @map("token_count")
+  importance     Int                @default(5) // 1-10 relevance weight
+  isApproved     Boolean            @default(false) @map("is_approved") // gated before bot uses it
+  approvedAt     DateTime?          @map("approved_at")
+  approvedById   String?            @map("approved_by")
+  metadata       Json?
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  deletedAt      DateTime?          @map("deleted_at")
+  createdById    String?            @map("created_by")
+  updatedById    String?            @map("updated_by")
+
+  @@index([sourceType])
+  @@index([category])
+  @@index([isApproved])
+  @@map("ai_learnings")
+}
+
+// Chat sessions with AI bots (internal assistant, client sales bot, etc.)
+model AiConversation {
+  id            String              @id @default(cuid())
+  context       ConversationContext
+  title         String?
+  userId        String?             @map("user_id") // null for anonymous client chats
+  leadId        String?             @map("lead_id")
+  nurseryId     String?             @map("nursery_id")
+  sessionToken  String?             @unique @map("session_token") // for anon clients
+  messages      Json                @default("[]") // [{role, content, ts, tokens}]
+  model         String?             // gemini-2.0-flash / claude-opus-4.6 / etc.
+  totalTokens   Int                 @default(0) @map("total_tokens")
+  totalCost     Decimal?            @db.Decimal(10, 4) @map("total_cost") // USD
+  rating        Int?                // 1-5 user feedback
+  feedback      String?
+  metadata      Json?
+  startedAt     DateTime            @default(now()) @map("started_at")
+  endedAt       DateTime?           @map("ended_at")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+  deletedAt     DateTime?           @map("deleted_at")
+
+  @@index([context])
+  @@index([userId])
+  @@index([leadId])
+  @@index([nurseryId])
+  @@map("ai_conversations")
+}
+
+// Cached EN ↔ AR translations (reuse across forms, content, proposals).
+// Key = hash of source text + source lang + context.
+model AiTranslation {
+  id            String   @id @default(cuid())
+  hash          String   @unique // sha256(sourceText + sourceLang + targetLang + context)
+  sourceText    String   @map("source_text")
+  sourceLang    String   @map("source_lang") // "en" / "ar"
+  targetText    String   @map("target_text")
+  targetLang    String   @map("target_lang")
+  context       String?  // e.g. "faq" / "hero" / "proposal" / "ui"
+  model         String?  // which AI model generated it
+  isVerified    Boolean  @default(false) @map("is_verified") // human-approved
+  verifiedById  String?  @map("verified_by")
+  hitCount      Int      @default(0) @map("hit_count") // cache usage counter
+  lastUsedAt    DateTime? @map("last_used_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdById   String?  @map("created_by")
+
+  @@index([sourceLang, targetLang])
+  @@index([context])
+  @@index([isVerified])
+  @@map("ai_translations")
+}
+
+// ============================================================
+// A1.3i — INFRASTRUCTURE
+// ============================================================
+
+// Polymorphic file storage. Any table can attach files via (linkedTable, linkedId).
+// Actual bytes live in object storage (e.g. Cloudflare R2); this row is metadata only.
+model File {
+  id           String          @id @default(cuid())
+  filename     String          // original upload name
+  storageKey   String          @unique @map("storage_key") // path/key in bucket
+  url          String          // public or signed URL
+  mimeType     String          @map("mime_type")
+  sizeBytes    BigInt          @map("size_bytes")
+  checksum     String?         // sha256 for dedup / integrity
+  linkedTable  FileLinkedTable @map("linked_table")
+  linkedId     String          @map("linked_id")
+  label        String?         // e.g. "logo", "hero_image", "contract_pdf"
+  isPublic     Boolean         @default(false) @map("is_public")
+  metadata     Json?           // dimensions, duration, EXIF, etc.
+  uploadedById String?         @map("uploaded_by")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  deletedAt    DateTime?       @map("deleted_at")
+
+  @@index([linkedTable, linkedId])
+  @@index([uploadedById])
+  @@index([mimeType])
+  @@map("files")
+}
+
+// Key/value settings store. Singleton rows keyed by `key`.
+// Covers: site config, feature flags, API keys (encrypted), branding defaults, etc.
+model Setting {
+  id           String    @id @default(cuid())
+  key          String    @unique // e.g. "site.title", "ai.default_model", "smtp.host"
+  value        Json      // flexible: string, number, bool, object, array
+  category     String?   // "general" / "ai" / "billing" / "branding" / "integrations"
+  label        String?   // human-readable label for admin UI
+  description  String?   // help text
+  isPublic     Boolean   @default(false) @map("is_public") // safe to expose to client
+  isSystem     Boolean   @default(false) @map("is_system") // cannot be deleted
+  isEncrypted  Boolean   @default(false) @map("is_encrypted") // value is encrypted at rest
+  sortOrder    Int       @default(0) @map("sort_order")
+  updatedById  String?   @map("updated_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  @@index([category])
+  @@index([isPublic])
+  @@map("settings")
+}
