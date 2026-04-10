@@ -137,7 +137,6 @@
   }
 
   function showApp() {
-    loginScreen.classList.add('hidden');
     adminApp.classList.remove('hidden');
     initDashboard();
     navigateTo('home');
