@@ -168,6 +168,102 @@ export async function attachSessionUser(req: VercelRequest): Promise<void> {
   }
 }
 
+// ============================================================
+// Login rate limiting (Phase B3)
+// ============================================================
+//
+// Brute-force defense. We re-use the audit_logs table as the source of truth
+// — every failed login already writes an `auth.login.failed` row with the
+// email in `entityLabel` and the client IP in `ipAddress`. No new table.
+//
+// Two independent windows (checked together, either one trips the lockout):
+//   - per email: 10 failed attempts in 15 min
+//   - per IP:    20 failed attempts in 15 min
+//
+// On successful login, the PER-EMAIL counter resets — we only count failures
+// newer than the most recent `auth.login.success` for that email. The PER-IP
+// counter does NOT reset on success, because an attacker sharing an IP with a
+// legit user would otherwise be able to wipe their slate by logging into
+// their own account. IP lockouts just expire on their own after the window.
+//
+// Query cost: 3 indexed count/find calls per login attempt. audit_logs has
+// indexes on `action` and `createdAt`, so these stay cheap at our scale.
+
+export const LOGIN_RATE_WINDOW_MS = 15 * 60 * 1000;
+export const LOGIN_RATE_MAX_PER_EMAIL = 10;
+export const LOGIN_RATE_MAX_PER_IP = 20;
+
+export type LoginRateCheck =
+  | { allowed: true }
+  | { allowed: false; reason: 'email' | 'ip'; retryAfterSec: number };
+
+/**
+ * Check whether a login attempt for `email` from `req`'s IP should be allowed.
+ * Returns `{allowed:true}` or a lockout descriptor. Never throws — a DB error
+ * fails open (allowed:true) so an audit-log outage can't lock everyone out.
+ */
+export async function checkLoginRateLimit(
+  req: VercelRequest,
+  email: string,
+): Promise<LoginRateCheck> {
+  try {
+    const now = Date.now();
+    const windowStart = new Date(now - LOGIN_RATE_WINDOW_MS);
+    const ip = getIp(req);
+
+    // Per-email count: only failures newer than the most recent success.
+    const lastSuccess = await prisma.auditLog.findFirst({
+      where: {
+        action: 'auth.login.success',
+        entityLabel: email,
+        createdAt: { gte: windowStart },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    });
+    const emailSince = lastSuccess?.createdAt ?? windowStart;
+
+    const emailFails = await prisma.auditLog.count({
+      where: {
+        action: 'auth.login.failed',
+        entityLabel: email,
+        createdAt: { gt: emailSince },
+      },
+    });
+
+    if (emailFails >= LOGIN_RATE_MAX_PER_EMAIL) {
+      return {
+        allowed: false,
+        reason: 'email',
+        retryAfterSec: Math.ceil(LOGIN_RATE_WINDOW_MS / 1000),
+      };
+    }
+
+    // Per-IP count: every failure in the window, regardless of email.
+    if (ip) {
+      const ipFails = await prisma.auditLog.count({
+        where: {
+          action: 'auth.login.failed',
+          ipAddress: ip,
+          createdAt: { gte: windowStart },
+        },
+      });
+      if (ipFails >= LOGIN_RATE_MAX_PER_IP) {
+        return {
+          allowed: false,
+          reason: 'ip',
+          retryAfterSec: Math.ceil(LOGIN_RATE_WINDOW_MS / 1000),
+        };
+      }
+    }
+
+    return { allowed: true };
+  } catch {
+    // Fail open — an audit_logs read failure must not block logins.
+    return { allowed: true };
+  }
+}
+
 /** Delete a single session. Safe to call on an unknown token. */
 export async function revokeSession(token: string): Promise<void> {
   if (typeof token !== 'string' || token.length === 0) return;

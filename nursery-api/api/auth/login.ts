@@ -16,13 +16,17 @@
 //   (audit tool) can surface brute-force attempts. Actor on failure is
 //   'anonymous' since there's no verified identity yet.
 //
-// TODO(phase-b3): rate limit failed logins per IP + email.
+// Rate limiting (Phase B3): checkLoginRateLimit() is called BEFORE the
+// bcrypt compare. Exceeding either window (10/email or 20/IP in 15 min)
+// returns 429 with a Retry-After header and writes an
+// `auth.login.rate_limited` audit row. Timing is still flat for the
+// allowed path — the rate check runs on every request, locked or not.
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { prisma } from '../../src/lib/prisma.js';
 import { route, parseBody, ok, HttpError } from '../../src/lib/http.js';
 import { verifyPassword } from '../../src/lib/password.js';
-import { createSession } from '../../src/lib/auth.js';
+import { checkLoginRateLimit, createSession } from '../../src/lib/auth.js';
 import { setSessionCookie } from '../../src/lib/cookies.js';
 import { recordAudit } from '../../src/lib/audit.js';
 import { loginBodySchema } from '../../src/schemas/auth.js';
@@ -69,6 +73,24 @@ function serializeRole(role: {
 
 async function login(req: VercelRequest, res: VercelResponse): Promise<void> {
   const { email, password } = parseBody(loginBodySchema, req.body);
+
+  // Rate-limit check runs before the password lookup — a locked-out caller
+  // doesn't get to trigger a bcrypt compare or a DB lookup for the user row.
+  const rate = await checkLoginRateLimit(req, email);
+  if (!rate.allowed) {
+    res.setHeader('Retry-After', String(rate.retryAfterSec));
+    await recordAudit({
+      req,
+      actorType: 'anonymous',
+      actorLabel: email,
+      action: 'auth.login.rate_limited',
+      entityTable: 'users',
+      entityId: null,
+      entityLabel: email,
+      metadata: { reason: rate.reason, retryAfterSec: rate.retryAfterSec },
+    });
+    throw new HttpError(429, 'rate_limited', 'too many login attempts, try again later');
+  }
 
   const user = await prisma.user.findUnique({
     where: { email },
