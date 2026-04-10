@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "typecheck": "tsc --noEmit",
+    "test:db": "tsx scripts/test-prisma-connection.mjs",
+    "dev": "vercel dev"
   },
   "keywords": [],
   "author": "",
@@ -12,9 +14,16 @@
   "type": "commonjs",
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
-    "@prisma/adapter-neon": "^7.7.0",
+    "@prisma/adapter-neon": "^6.19.3",
     "@prisma/client": "^6.19.3",
     "prisma": "^6.19.3",
-    "ws": "^8.20.0"
+    "ws": "^8.20.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@vercel/node": "^5.7.3",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
   }
 }

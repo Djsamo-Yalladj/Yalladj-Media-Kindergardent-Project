@@ -12,6 +12,67 @@
   const LAST_SAVED_KEY  = 'yalladj_last_saved';
   const CONTENT_KEYS    = ['hero','pain','services','packages','process','trust','portfolio','app','upsell','contact','footer','settings'];
 
+  /* ---- Nursery API bridge (A3.9) ----
+     End-to-end proof that admin.html can talk to the nursery-api (Neon DB).
+     Scope: settings only. Everything else still uses localStorage until Phase B
+     adds real auth. localStorage is always written in parallel so legacy code
+     paths (login password lookup, export, reset) keep working if API is down. */
+  const API_BASE         = 'http://localhost:4000';
+  const API_SETTINGS_KEY = 'yalladj_site_settings';
+  let   _cachedSettingId = null;
+
+  const NurseryApi = {
+    async _findId() {
+      if (_cachedSettingId) return _cachedSettingId;
+      const r = await fetch(`${API_BASE}/api/settings?key=${API_SETTINGS_KEY}`);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const body = await r.json();
+      if (!body.ok) throw new Error(body.error || 'api_error');
+      const row = body.data.rows[0];
+      _cachedSettingId = row ? row.id : null;
+      return _cachedSettingId;
+    },
+    async loadSettings() {
+      const r = await fetch(`${API_BASE}/api/settings?key=${API_SETTINGS_KEY}`);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const body = await r.json();
+      if (!body.ok) throw new Error(body.error || 'api_error');
+      const row = body.data.rows[0];
+      if (!row) return null;
+      _cachedSettingId = row.id;
+      return row.value || {};
+    },
+    async saveSettings(value) {
+      const id = await this._findId();
+      if (id) {
+        const r = await fetch(`${API_BASE}/api/settings/${id}`, {
+          method:  'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ value })
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const body = await r.json();
+        if (!body.ok) throw new Error(body.error || 'api_error');
+        return body.data;
+      }
+      const r = await fetch(`${API_BASE}/api/settings`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          key:      API_SETTINGS_KEY,
+          category: 'site',
+          label:    'YallaDJ Media site settings',
+          value
+        })
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const body = await r.json();
+      if (!body.ok) throw new Error(body.error || 'api_error');
+      _cachedSettingId = body.data.id;
+      return body.data;
+    }
+  };
+
   function getActivePassword() {
     try {
       const s = localStorage.getItem('yalladj_settings');
@@ -1630,8 +1691,22 @@
   /* ============================================================
      SETTINGS EDITOR
      ============================================================ */
-  function initSettingsEditor() {
-    const s = loadSection('settings');
+  async function initSettingsEditor() {
+    // Start from localStorage (instant, sync) so UI renders without flash.
+    let s = loadSection('settings');
+
+    // Then overlay from API (source of truth). If it fails, we keep local values.
+    try {
+      const apiValue = await NurseryApi.loadSettings();
+      if (apiValue) {
+        s = { ...s, ...apiValue };
+        // Mirror back to localStorage so login/export/reset stay consistent.
+        try { localStorage.setItem('yalladj_settings', JSON.stringify(s)); } catch (e) {}
+        console.log('[A3.9] settings loaded from nursery-api');
+      }
+    } catch (err) {
+      console.warn('[A3.9] settings API load failed, using localStorage:', err.message);
+    }
 
     setVal('settings-siteTitle', s.siteTitle);
     document.getElementById('settings-backToTop').checked    = s.backToTop !== false;
@@ -1663,18 +1738,27 @@
     document.getElementById('settings-reset-btn').addEventListener('click', resetToDefaults);
   }
 
-  function saveSettingsEditor() {
+  async function saveSettingsEditor() {
     const number = getVal('settings-floatingWaNumber').replace(/\D/g, '');
     const msg    = getVal('settings-floatingWaMsg');
-    saveSection('settings', {
+    const data = {
       siteTitle:      getVal('settings-siteTitle'),
       floatingWaShow: document.getElementById('settings-floatingWaShow').checked,
       floatingWaLink: 'https://wa.me/' + number + '?text=' + encodeURIComponent(msg),
       backToTop:      document.getElementById('settings-backToTop').checked,
       aos:            document.getElementById('settings-aos').checked,
       adminPassword:  getActivePassword()
-    });
-    showToast('Settings saved ✓');
+    };
+    // Always save to localStorage first (safety net for legacy code paths).
+    saveSection('settings', data);
+    // Then push to nursery-api (best-effort).
+    try {
+      await NurseryApi.saveSettings(data);
+      showToast('Settings saved ✓ (synced to cloud)');
+    } catch (err) {
+      console.warn('[A3.9] settings API save failed, saved locally only:', err.message);
+      showToast('Settings saved ✓ (offline — local only)');
+    }
   }
 
   function changePassword() {
