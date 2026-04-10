@@ -877,4 +877,62 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
   .editor-header .btn-save { justify-content: center; }
   .form-row.two-col { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: 1fr; }
+  .data-mgmt-row { flex-direction: column; }
+  .data-mgmt-row .btn-export,
+  .data-mgmt-row .btn-import,
+  .data-mgmt-row .btn-danger-reset { width: 100%; justify-content: center; }
+}
+
+/* ============================================================
+   DATA MANAGEMENT — Settings Section
+   ============================================================ */
+.danger-zone { border-color: rgba(255, 80, 80, 0.2); }
+.danger-zone .editor-card-title { color: #ff9090; }
+
+.data-mgmt-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-export,
+.btn-import {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(175,255,0,0.4);
+  background: rgba(175,255,0,0.08);
+  color: var(--lime);
+  transition: background 0.2s, border-color 0.2s;
+  text-decoration: none;
+}
+.btn-export:hover,
+.btn-import:hover {
+  background: rgba(175,255,0,0.16);
+  border-color: var(--lime);
+}
+
+.btn-danger-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255,80,80,0.4);
+  background: rgba(255,80,80,0.08);
+  color: #ff8080;
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn-danger-reset:hover {
+  background: rgba(255,80,80,0.18);
+  border-color: #ff5050;
+  color: #ffaaaa;
 }

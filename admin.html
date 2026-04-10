@@ -838,11 +838,99 @@
         </section>
 
         <section id="section-settings" class="admin-section">
-          <div class="coming-soon-placeholder">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-            <h3>General Settings</h3>
-            <p>Coming in sub-step 11G</p>
+
+          <!-- General Site Settings -->
+          <div class="editor-card">
+            <h3 class="editor-card-title">General Site Settings</h3>
+            <div class="form-group">
+              <label>Browser Tab Title</label>
+              <input type="text" id="settings-siteTitle" placeholder="YallaDJ Media — Professional Websites for Nurseries..." />
+            </div>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Back to Top Button</label>
+                <label class="toggle-label">
+                  <input type="checkbox" id="settings-backToTop" />
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                  Show
+                </label>
+              </div>
+              <div class="form-group">
+                <label>Scroll Animations (AOS)</label>
+                <label class="toggle-label">
+                  <input type="checkbox" id="settings-aos" />
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                  Enabled
+                </label>
+              </div>
+            </div>
           </div>
+
+          <!-- Floating WhatsApp -->
+          <div class="editor-card">
+            <h3 class="editor-card-title">Floating WhatsApp Button</h3>
+            <div class="form-group">
+              <label>Show Floating WhatsApp</label>
+              <label class="toggle-label">
+                <input type="checkbox" id="settings-floatingWaShow" />
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                Visible on sales page
+              </label>
+            </div>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>WhatsApp Number <small>(digits only)</small></label>
+                <input type="text" id="settings-floatingWaNumber" placeholder="971544503515" />
+              </div>
+              <div class="form-group">
+                <label>Prefilled Message</label>
+                <input type="text" id="settings-floatingWaMsg" placeholder="Hi YallaDJ Media! I'm interested..." />
+              </div>
+            </div>
+            <button type="button" class="btn-save" id="settings-save-btn">Save Settings</button>
+          </div>
+
+          <!-- Change Password -->
+          <div class="editor-card">
+            <h3 class="editor-card-title">Change Admin Password</h3>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" id="settings-currentPwd" autocomplete="current-password" />
+              </div>
+              <div class="form-group">
+                <label>New Password <small>(min 6 chars)</small></label>
+                <input type="password" id="settings-newPwd" autocomplete="new-password" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" id="settings-confirmPwd" autocomplete="new-password" />
+            </div>
+            <button type="button" class="btn-save" id="settings-changepwd-btn">Change Password</button>
+          </div>
+
+          <!-- Data Management -->
+          <div class="editor-card danger-zone">
+            <h3 class="editor-card-title">Data Management</h3>
+            <p style="color:var(--muted);font-size:0.85rem;margin-bottom:18px;">Export a backup of all content, import a previous backup, or reset everything to factory defaults.</p>
+            <div class="data-mgmt-row">
+              <button type="button" class="btn-export" id="settings-export-btn">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export All Content
+              </button>
+              <label class="btn-import" for="settings-import-file">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Import Backup
+              </label>
+              <input type="file" id="settings-import-file" accept=".json" style="display:none" />
+              <button type="button" class="btn-danger-reset" id="settings-reset-btn">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                Reset to Defaults
+              </button>
+            </div>
+          </div>
+
         </section>
 
       </main>

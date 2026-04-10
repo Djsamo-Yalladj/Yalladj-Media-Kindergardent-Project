@@ -10,6 +10,15 @@
   const ADMIN_PASSWORD  = 'yalladj2026';
   const SESSION_KEY     = 'yalladj_admin_session';
   const LAST_SAVED_KEY  = 'yalladj_last_saved';
+  const CONTENT_KEYS    = ['hero','pain','services','packages','process','trust','portfolio','app','upsell','contact','footer','settings'];
+
+  function getActivePassword() {
+    try {
+      const s = localStorage.getItem('yalladj_settings');
+      if (s) { const p = JSON.parse(s); if (p.adminPassword) return p.adminPassword; }
+    } catch(e) {}
+    return ADMIN_PASSWORD;
+  }
 
   /* ---- Editor state ---- */
   let dirtySection = null;
@@ -61,7 +70,7 @@
   function doLogin(e) {
     e.preventDefault();
     const pwd = passwordInput.value.trim();
-    if (pwd === ADMIN_PASSWORD) {
+    if (pwd === getActivePassword()) {
       const storage = rememberMe.checked ? localStorage : sessionStorage;
       storage.setItem(SESSION_KEY, 'authenticated');
       loginError.classList.add('hidden');
@@ -91,6 +100,9 @@
     initDashboard();
     navigateTo('home');
     startClock();
+    window.addEventListener('beforeunload', (e) => {
+      if (dirtySection) { e.preventDefault(); e.returnValue = ''; }
+    });
   }
 
   /* ============================================================
@@ -145,6 +157,7 @@
       else if (sectionId === 'upsell')    initUpsellEditor();
       else if (sectionId === 'contact')   initContactEditor();
       else if (sectionId === 'footer')    initFooterEditor();
+      else if (sectionId === 'settings')  initSettingsEditor();
     }
   }
 
@@ -1612,6 +1625,135 @@
       contactLocation:  getVal('footer-contactLocation')
     });
     showToast('Footer saved ✓');
+  }
+
+  /* ============================================================
+     SETTINGS EDITOR
+     ============================================================ */
+  function initSettingsEditor() {
+    const s = loadSection('settings');
+
+    setVal('settings-siteTitle', s.siteTitle);
+    document.getElementById('settings-backToTop').checked    = s.backToTop !== false;
+    document.getElementById('settings-aos').checked          = s.aos !== false;
+    document.getElementById('settings-floatingWaShow').checked = s.floatingWaShow !== false;
+
+    // Parse number + message from saved link
+    if (s.floatingWaLink) {
+      const m = s.floatingWaLink.match(/wa\.me\/(\d+)(?:\?text=(.*))?/);
+      if (m) {
+        setVal('settings-floatingWaNumber', m[1] || '');
+        setVal('settings-floatingWaMsg', m[2] ? decodeURIComponent(m[2]) : '');
+      }
+    } else {
+      setVal('settings-floatingWaNumber', '971544503515');
+      setVal('settings-floatingWaMsg', "Hi YallaDJ Media! I'm interested in a website for my nursery.");
+    }
+
+    // Track dirty on text inputs + toggles
+    watchInputs('settings', ['settings-siteTitle','settings-floatingWaNumber','settings-floatingWaMsg']);
+    ['settings-backToTop','settings-aos','settings-floatingWaShow'].forEach(id => {
+      document.getElementById(id).addEventListener('change', () => markDirty('settings'));
+    });
+
+    document.getElementById('settings-save-btn').addEventListener('click', saveSettingsEditor);
+    document.getElementById('settings-changepwd-btn').addEventListener('click', changePassword);
+    document.getElementById('settings-export-btn').addEventListener('click', exportAllContent);
+    document.getElementById('settings-import-file').addEventListener('change', importContent);
+    document.getElementById('settings-reset-btn').addEventListener('click', resetToDefaults);
+  }
+
+  function saveSettingsEditor() {
+    const number = getVal('settings-floatingWaNumber').replace(/\D/g, '');
+    const msg    = getVal('settings-floatingWaMsg');
+    saveSection('settings', {
+      siteTitle:      getVal('settings-siteTitle'),
+      floatingWaShow: document.getElementById('settings-floatingWaShow').checked,
+      floatingWaLink: 'https://wa.me/' + number + '?text=' + encodeURIComponent(msg),
+      backToTop:      document.getElementById('settings-backToTop').checked,
+      aos:            document.getElementById('settings-aos').checked,
+      adminPassword:  getActivePassword()
+    });
+    showToast('Settings saved ✓');
+  }
+
+  function changePassword() {
+    const current  = document.getElementById('settings-currentPwd').value;
+    const newPwd   = document.getElementById('settings-newPwd').value.trim();
+    const confirm  = document.getElementById('settings-confirmPwd').value.trim();
+
+    if (current !== getActivePassword()) { showToast('❌ Current password is incorrect'); return; }
+    if (newPwd.length < 6)               { showToast('❌ New password must be at least 6 characters'); return; }
+    if (newPwd !== confirm)              { showToast('❌ Passwords do not match'); return; }
+
+    // Save inside yalladj_settings
+    const existing = loadSection('settings');
+    existing.adminPassword = newPwd;
+    localStorage.setItem('yalladj_settings', JSON.stringify(existing));
+
+    document.getElementById('settings-currentPwd').value = '';
+    document.getElementById('settings-newPwd').value = '';
+    document.getElementById('settings-confirmPwd').value = '';
+    showToast('Password changed ✓');
+  }
+
+  function exportAllContent() {
+    const backup = {};
+    CONTENT_KEYS.forEach(k => {
+      const raw = localStorage.getItem('yalladj_' + k);
+      backup[k] = raw ? JSON.parse(raw) : null;
+    });
+    const date = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'yalladj-backup-' + date + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Backup exported ✓');
+  }
+
+  function importContent(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+      try {
+        const data  = JSON.parse(ev.target.result);
+        const valid = CONTENT_KEYS.some(k => data[k] !== undefined);
+        if (!valid) { showToast('❌ Invalid backup file'); e.target.value = ''; return; }
+        if (!confirm('Replace ALL content with this backup?\nThis cannot be undone.')) {
+          e.target.value = ''; return;
+        }
+        CONTENT_KEYS.forEach(k => {
+          if (data[k] !== null && data[k] !== undefined) {
+            localStorage.setItem('yalladj_' + k, JSON.stringify(data[k]));
+          }
+        });
+        // Re-init settings editor with restored values
+        editorInitialized['settings'] = false;
+        initSettingsEditor();
+        editorInitialized['settings'] = true;
+        showToast('Content restored from backup ✓');
+      } catch (err) {
+        showToast('❌ Failed to read file');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function resetToDefaults() {
+    if (!confirm('Are you sure you want to reset ALL content to defaults?\nThis cannot be undone.')) return;
+    const typed = prompt('Type  RESET  to confirm (all caps):');
+    if ((typed || '').trim() !== 'RESET') { showToast('Reset cancelled'); return; }
+    CONTENT_KEYS.forEach(k => localStorage.removeItem('yalladj_' + k));
+    // Re-init settings editor
+    editorInitialized['settings'] = false;
+    initSettingsEditor();
+    editorInitialized['settings'] = true;
+    showToast('All content reset to defaults ✓');
   }
 
   /* ============================================================
