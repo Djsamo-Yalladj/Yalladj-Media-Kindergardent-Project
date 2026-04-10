@@ -1306,11 +1306,16 @@
 
   function initPortfolioEditor() {
     const d = loadSection('portfolio');
-    portfolioCards = (d.cards || []).map(c => ({ ...c }));
-    setVal('portfolio-title',     d.title    || '');
-    setVal('portfolio-subtitle',  d.subtitle || '');
-    setVal('portfolio-demoBtn',   d.demoBtn  || '');
-    setVal('portfolio-demoWaLink',d.demoWaLink || '');
+    const defaultPortfolioCards = [
+      { name: "Little Stars Nursery",      desc: "Sample website — live demo coming soon", show: true },
+      { name: "Sunny Days Kindergarten",   desc: "Sample website — live demo coming soon", show: true },
+      { name: "Future Stars Academy",      desc: "Sample website — live demo coming soon", show: true }
+    ];
+    portfolioCards = (d.cards && d.cards.length ? d.cards : defaultPortfolioCards).map(c => ({ ...c }));
+    setVal('portfolio-title',     d.title     || 'Our <span class="lime-text">Portfolio</span>');
+    setVal('portfolio-subtitle',  d.subtitle  || "See real nursery websites we've designed and launched across the UAE.");
+    setVal('portfolio-demoBtn',   d.demoBtn   || 'Request Live Demo');
+    setVal('portfolio-demoWaLink',d.demoWaLink || 'https://wa.me/971544503515?text=Hi%20YallaDJ%20Media!%20Can%20you%20show%20me%20some%20sample%20nursery%20websites?');
     renderPortfolioList();
     watchInputs('portfolio', ['portfolio-title','portfolio-subtitle','portfolio-demoBtn','portfolio-demoWaLink']);
     document.getElementById('portfolio-save-btn').addEventListener('click', savePortfolioEditor);
@@ -1401,11 +1406,20 @@
 
   function initUpsellEditor() {
     const d = loadSection('upsell');
-    upsellAddons = (d.addons || []).map(a => ({ ...a }));
-    setVal('upsell-title',     d.title    || '');
-    setVal('upsell-subtitle',  d.subtitle || '');
-    setVal('upsell-btnText',   d.btnText  || '');
-    setVal('upsell-btnWaLink', d.btnWaLink || '');
+    const defaultAddons = [
+      { icon: "bi bi-tools",            title: "Monthly Website Maintenance", show: true },
+      { icon: "bi bi-search",           title: "SEO & Google Ranking",        show: true },
+      { icon: "bi bi-camera-fill",      title: "Nursery Photography",         show: true },
+      { icon: "bi bi-camera-video-fill",title: "Promo Videos & Reels",        show: true },
+      { icon: "bi bi-google",           title: "Google Business Setup",       show: true },
+      { icon: "bi bi-instagram",        title: "Social Media Management",     show: true },
+      { icon: "bi bi-megaphone-fill",   title: "Paid Ads (Google + Meta)",    show: true }
+    ];
+    upsellAddons = (d.addons && d.addons.length ? d.addons : defaultAddons).map(a => ({ ...a }));
+    setVal('upsell-title',     d.title     || 'Grow Even <span class="lime-text">More After Launch</span>');
+    setVal('upsell-subtitle',  d.subtitle  || "Supercharge your nursery's digital presence with our optional add-on services.");
+    setVal('upsell-btnText',   d.btnText   || 'Ask About Monthly Plans');
+    setVal('upsell-btnWaLink', d.btnWaLink || 'https://wa.me/971544503515?text=Hi%20YallaDJ%20Media!%20I%27d%20like%20to%20know%20more%20about%20your%20monthly%20plans%20and%20add-ons.');
     renderUpsellList();
     watchInputs('upsell', ['upsell-title','upsell-subtitle','upsell-btnText','upsell-btnWaLink']);
     document.getElementById('upsell-save-btn').addEventListener('click', saveUpsellEditor);
@@ -1436,14 +1450,14 @@
 
   function initContactEditor() {
     const d = loadSection('contact');
-    setVal('contact-title',        d.title        || '');
-    setVal('contact-subtitle',     d.subtitle     || '');
-    setVal('contact-phone',        d.phone        || '');
-    setVal('contact-waHref',       d.waHref       || '');
-    setVal('contact-email',        d.email        || '');
-    setVal('contact-location',     d.location     || '');
-    setVal('contact-responseTime', d.responseTime || '');
-    setVal('contact-formBtnText',  d.formBtnText  || '');
+    setVal('contact-title',        d.title        || 'Get a <span class="lime-text">Free Consultation</span>');
+    setVal('contact-subtitle',     d.subtitle     || "Tell us about your nursery and we'll come back to you within 2 hours.");
+    setVal('contact-phone',        d.phone        || '+971 54 450 3515');
+    setVal('contact-waHref',       d.waHref       || 'https://wa.me/971544503515');
+    setVal('contact-email',        d.email        || 'Support@yalladj.com');
+    setVal('contact-location',     d.location     || 'UAE — Serving nurseries across all Emirates');
+    setVal('contact-responseTime', d.responseTime || 'Within 2 hours (Sat–Thu, 9am–9pm)');
+    setVal('contact-formBtnText',  d.formBtnText  || 'Send Inquiry');
     watchInputs('contact', [
       'contact-title','contact-subtitle','contact-phone','contact-waHref',
       'contact-email','contact-location','contact-responseTime','contact-formBtnText'
@@ -1535,16 +1549,30 @@
 
   function initFooterEditor() {
     const d = loadSection('footer');
-    footerQuickLinks   = (d.quickLinks   || []).map(l => ({ ...l }));
-    footerServiceLinks = (d.serviceLinks || []).map(l => ({ ...l }));
+    const defaultQuickLinks = [
+      { label: "Services",     anchor: "#services"  },
+      { label: "Packages",     anchor: "#packages"  },
+      { label: "How It Works", anchor: "#process"   },
+      { label: "Portfolio",    anchor: "#portfolio" },
+      { label: "Contact Us",   anchor: "#contact"   }
+    ];
+    const defaultServiceLinks = [
+      { label: "New Nursery Website",     anchor: "#services" },
+      { label: "Website Redesign",        anchor: "#services" },
+      { label: "Monthly Maintenance",     anchor: "#upsell"   },
+      { label: "SEO & Google Ranking",    anchor: "#upsell"   },
+      { label: "Social Media Management", anchor: "#upsell"   }
+    ];
+    footerQuickLinks   = (d.quickLinks   && d.quickLinks.length   ? d.quickLinks   : defaultQuickLinks).map(l => ({ ...l }));
+    footerServiceLinks = (d.serviceLinks && d.serviceLinks.length ? d.serviceLinks : defaultServiceLinks).map(l => ({ ...l }));
 
-    setVal('footer-tagline',       d.tagline       || '');
-    setVal('footer-company',       d.company       || '');
-    setVal('footer-copyright',     d.copyright     || '');
-    setVal('footer-supportEmail',  d.supportEmail  || '');
-    setVal('footer-contactPhone',  d.contactPhone  || '');
-    setVal('footer-contactEmail',  d.contactEmail  || '');
-    setVal('footer-contactLocation', d.contactLocation || '');
+    setVal('footer-tagline',         d.tagline         || 'Professional websites for UAE nurseries & kindergartens. Fast, bilingual, beautiful.');
+    setVal('footer-company',         d.company         || 'A division of Yalladj FZE • UAE');
+    setVal('footer-copyright',       d.copyright       || '© 2025 YallaDJ Media — A division of Yalladj FZE. All rights reserved.');
+    setVal('footer-supportEmail',    d.supportEmail    || 'Support@yalladj.com');
+    setVal('footer-contactPhone',    d.contactPhone    || '+971 54 450 3515');
+    setVal('footer-contactEmail',    d.contactEmail    || 'Support@yalladj.com');
+    setVal('footer-contactLocation', d.contactLocation || 'UAE — All Emirates');
     renderFooterLists();
 
     watchInputs('footer', [
