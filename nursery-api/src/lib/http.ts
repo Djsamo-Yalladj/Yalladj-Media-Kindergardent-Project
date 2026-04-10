@@ -3,6 +3,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { ZodError, type ZodType } from 'zod';
+import { attachSessionUser } from './auth.js';
 
 export type Handler = (
   req: VercelRequest,
@@ -25,6 +26,9 @@ export function route(map: MethodMap): Handler {
       return;
     }
     try {
+      // Resolve session cookie → req.user (null if anonymous). Audit helper
+      // reads this automatically, handlers that need auth can gate on it.
+      await attachSessionUser(req);
       await handler(req, res);
     } catch (err) {
       sendError(res, err);
