@@ -7,7 +7,6 @@
   'use strict';
 
   /* ---- Config ---- */
-  const ADMIN_PASSWORD  = 'yalladj2026';
   const SESSION_KEY     = 'yalladj_admin_session';
   const LAST_SAVED_KEY  = 'yalladj_last_saved';
   const CONTENT_KEYS    = ['hero','pain','services','packages','process','trust','portfolio','app','upsell','contact','footer','settings'];
@@ -72,14 +71,6 @@
       return body.data;
     }
   };
-
-  function getActivePassword() {
-    try {
-      const s = localStorage.getItem('yalladj_settings');
-      if (s) { const p = JSON.parse(s); if (p.adminPassword) return p.adminPassword; }
-    } catch(e) {}
-    return ADMIN_PASSWORD;
-  }
 
   /* ---- Editor state ---- */
   let dirtySection = null;
@@ -1721,7 +1712,6 @@
     });
 
     document.getElementById('settings-save-btn').addEventListener('click', saveSettingsEditor);
-    document.getElementById('settings-changepwd-btn').addEventListener('click', changePassword);
     document.getElementById('settings-export-btn').addEventListener('click', exportAllContent);
     document.getElementById('settings-import-file').addEventListener('change', importContent);
     document.getElementById('settings-reset-btn').addEventListener('click', resetToDefaults);
@@ -1735,8 +1725,7 @@
       floatingWaShow: document.getElementById('settings-floatingWaShow').checked,
       floatingWaLink: 'https://wa.me/' + number + '?text=' + encodeURIComponent(msg),
       backToTop:      document.getElementById('settings-backToTop').checked,
-      aos:            document.getElementById('settings-aos').checked,
-      adminPassword:  getActivePassword()
+      aos:            document.getElementById('settings-aos').checked
     };
     // Always save to localStorage first (safety net for legacy code paths).
     saveSection('settings', data);
@@ -1748,26 +1737,6 @@
       console.warn('[A3.9] settings API save failed, saved locally only:', err.message);
       showToast('Settings saved ✓ (offline — local only)');
     }
-  }
-
-  function changePassword() {
-    const current  = document.getElementById('settings-currentPwd').value;
-    const newPwd   = document.getElementById('settings-newPwd').value.trim();
-    const confirm  = document.getElementById('settings-confirmPwd').value.trim();
-
-    if (current !== getActivePassword()) { showToast('❌ Current password is incorrect'); return; }
-    if (newPwd.length < 6)               { showToast('❌ New password must be at least 6 characters'); return; }
-    if (newPwd !== confirm)              { showToast('❌ Passwords do not match'); return; }
-
-    // Save inside yalladj_settings
-    const existing = loadSection('settings');
-    existing.adminPassword = newPwd;
-    localStorage.setItem('yalladj_settings', JSON.stringify(existing));
-
-    document.getElementById('settings-currentPwd').value = '';
-    document.getElementById('settings-newPwd').value = '';
-    document.getElementById('settings-confirmPwd').value = '';
-    showToast('Password changed ✓');
   }
 
   function exportAllContent() {
